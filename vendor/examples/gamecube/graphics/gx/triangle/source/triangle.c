@@ -52,15 +52,13 @@ int	main(void)
 
 	GX_Init(fifoBuffer, FIFO_SIZE);
 	GX_SetCopyClear(backgroundColor, 0x00ffffff);
-	GX_SetViewport(0,0,screenMode->fbWidth,screenMode->efbHeight,0,1);
-	GX_SetDispCopyYScale((f32)screenMode->xfbHeight/(f32)screenMode->efbHeight);
-	GX_SetScissor(0,0,screenMode->fbWidth,screenMode->efbHeight);
-	GX_SetDispCopySrc(0,0,screenMode->fbWidth,screenMode->efbHeight);
-	GX_SetDispCopyDst(screenMode->fbWidth,screenMode->xfbHeight);
-	GX_SetCopyFilter(screenMode->aa,screenMode->sample_pattern,
-					 GX_TRUE,screenMode->vfilter);
-	GX_SetFieldMode(screenMode->field_rendering,
-					((screenMode->viHeight==2*screenMode->xfbHeight)?GX_ENABLE:GX_DISABLE));
+	GX_SetViewport(0,0,rmode.fbWidth,rmode.efbHeight,0,1);
+	GX_SetDispCopyYScale((f32)rmode.xfbHeight/(f32)rmode.efbHeight);
+	GX_SetScissor(0,0,rmode.fbWidth,rmode.efbHeight);
+	GX_SetDispCopySrc(0,0,rmode.fbWidth,rmode.efbHeight);
+	GX_SetDispCopyDst(rmode.fbWidth,rmode.xfbHeight);
+	GX_SetCopyFilter(rmode.aa,rmode.sample_pattern, GX_TRUE,rmode.vfilter);
+	GX_SetFieldMode(rmode.field_rendering, ((rmode.viHeight==2*rmode.xfbHeight)?GX_ENABLE:GX_DISABLE));
 
 	GX_SetCullMode(GX_CULL_NONE);
 	GX_CopyDisp(frameBuffer,GX_TRUE);
@@ -88,7 +86,7 @@ int	main(void)
 	while (1)
 	{
 		guLookAt(view, &camera,	&up, &look);
-		GX_SetViewport(0,0,screenMode->fbWidth,screenMode->efbHeight,0,1);
+		GX_SetViewport(0,0,rmode.fbWidth,rmode.efbHeight,0,1);
 		GX_InvVtxCache();
 		GX_InvalidateTexAll();
 		update_screen(view);

@@ -1,13 +1,17 @@
 const std = @import("std");
 const Builder = std.build.Builder;
 
+const name = "zick";
+const wii_ip = "192.168.0.1";
+const devkitpro = "/opt/devkitpro";
+
 pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
     const obj = b.addObject("main", "src/main.zig");
     obj.setOutputDir("build");
     obj.linkLibC();
     obj.setLibCFile(std.build.FileSource{ .path = "libc.txt" });
-    obj.addIncludeDir("vendor/devkitpro/libogc/include");
+    obj.addIncludeDir("vendor/libogc/include");
     obj.setBuildMode(mode);
     obj.setTarget(.{
         .cpu_arch = .powerpc,
@@ -17,9 +21,18 @@ pub fn build(b: *Builder) void {
         .cpu_features_add = std.Target.powerpc.featureSet(&.{.hard_float}),
     });
 
-    const elf = b.addSystemCommand(&[_][]const u8{ "/opt/devkitpro/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L/opt/devkitpro/libogc/lib/wii", "-lwiiuse", "-lbte", "-logc", "-lm", "-o", "build/zig-wii.elf" });
-    const dol = b.addSystemCommand(&[_][]const u8{ "elf2dol", "build/zig-wii.elf", "build/zig-wii.dol" });
+    const elf = b.addSystemCommand(&[_][]const u8{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii", "-lwiiuse", "-lbte", "-logc", "-lm", "-o", "build/" ++ name ++ ".elf" });
+    const dol = b.addSystemCommand(&[_][]const u8{ "elf2dol", "build/" ++ name ++ ".elf", "build/" ++ name ++ ".dol" });
     b.default_step.dependOn(&dol.step);
     dol.step.dependOn(&elf.step);
     elf.step.dependOn(&obj.step);
+
+    const dolphin = b.addSystemCommand(&[_][]const u8{ "dolphin-emu", "-a", "LLE", "-e", "build/" ++ name ++ ".dol" });
+    const run_step = b.step("run", "Run in Dolphin");
+    run_step.dependOn(&dolphin.step);
+
+    const wiiload = b.addSystemCommand(&[_][]const u8{ devkitpro ++ "/tools/bin/wiiload", "build/" ++ name ++ ".dol" });
+    wiiload.setEnvironmentVariable("WIILOAD", "tcp:" ++ wii_ip);
+    const deploy_step = b.step("deploy", "Deploy to Wii");
+    deploy_step.dependOn(&wiiload.step);
 }
