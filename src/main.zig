@@ -1,62 +1,57 @@
 const std = @import("std");
 const c = @import("c.zig");
 
+var screenMode: *c.GXRModeObj = undefined;
+var frameBuffer: *anyopaque = undefined;
+const fifo_size: u32 = 256 * 1024;
+
+var vertices: [9]i16 align(32) = [9]i16{ 0, 15, 0, -15, -15, 0, 15, -15, 0 };
+
+var colors: [12]u8 align(32) = [12]u8{
+    255, 0, 0, 255, // red
+    0, 255, 0, 255, // green
+    0, 0, 255, 255, // blue
+};
+
 export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
-    // Framebuffer
-    var xfb: *anyopaque = undefined;
-    var rmode: *c.GXRModeObj = undefined;
-    const fifo_size: u32 = 256 * 1024;
-
-    // Vectors
-    var up = c.guVector{ .x = 0.0, .y = 1.0, .z = 0.0 };
-    var look = c.guVector{ .x = 0.0, .y = 0.0, .z = -1.0 };
-    var camera = c.guVector{ .x = 0.0, .y = 0.0, .z = 0.0 };
-
-    // Matrixes
     var view: c.Mtx = undefined;
-    var model: c.Mtx = undefined;
     var projection: c.Mtx = undefined;
+    var fifo_buffer: *anyopaque = undefined;
 
-    // Triangle
-    var vertices: [9]i16 align(32) = [9]i16{ 0, 15, 0, -15, -15, 0, 15, -15, 0 };
-    var colors: [12]u8 align(32) = [12]u8{
-        255, 0, 0, 255, // red
-        0, 255, 0, 255, // green
-        0, 0, 255, 255, // blue
-    };
-
-    // Regular boilerplate
     c.VIDEO_Init();
-    rmode = c.VIDEO_GetPreferredMode(null);
-    xfb = c.MEM_K0_TO_K1(c.SYS_AllocateFramebuffer(rmode)) orelse unreachable;
-    c.console_init(xfb, 20, 20, rmode.fbWidth, rmode.xfbHeight, rmode.fbWidth * c.VI_DISPLAY_PIX_SZ);
-    c.VIDEO_Configure(rmode);
+
+    screenMode = c.VIDEO_GetPreferredMode(null);
+
+    var xfb = c.MEM_K0_TO_K1(c.SYS_AllocateFramebuffer(screenMode)) orelse unreachable;
+
+    c.VIDEO_Configure(screenMode);
     c.VIDEO_SetNextFramebuffer(xfb);
     c.VIDEO_SetBlack(false);
     c.VIDEO_Flush();
-    c.VIDEO_WaitVSync();
-    if (rmode.viTVMode & c.VI_NON_INTERLACE != 0) c.VIDEO_WaitVSync();
 
-    // GX boilerplate
     const buffer: [fifo_size]u32 = undefined;
-    var fifo_buffer = c.MEM_K0_TO_K1(&buffer[0]) orelse unreachable;
+    fifo_buffer = c.MEM_K0_TO_K1(&buffer[0]) orelse unreachable;
 
     _ = c.GX_Init(fifo_buffer, fifo_size);
-    // c.GX_SetCopyClear(c.GXColor{ .r = 0, .g = 0, .b = 0, .a = 255 }, 0x00ffffff);
-    c.GX_SetViewport(0, 0, @intToFloat(f32, rmode.fbWidth), @intToFloat(f32, rmode.efbHeight), 0, 0);
-    _ = c.GX_SetDispCopyYScale(@intToFloat(f32, rmode.xfbHeight) / @intToFloat(f32, rmode.efbHeight));
-    c.GX_SetScissor(0, 0, rmode.fbWidth, rmode.efbHeight);
-    c.GX_SetDispCopySrc(0, 0, rmode.fbWidth, rmode.efbHeight);
-    c.GX_SetDispCopyDst(rmode.fbWidth, rmode.xfbHeight);
-    c.GX_SetCopyFilter(rmode.aa, &rmode.sample_pattern, c.GX_TRUE, &rmode.vfilter);
-    c.GX_SetFieldMode(rmode.field_rendering, @boolToInt(rmode.viHeight == 2 * rmode.xfbHeight));
+    c.GX_SetViewport(0, 0, @intToFloat(f32, screenMode.fbWidth), @intToFloat(f32, screenMode.efbHeight), 0, 1);
+    _ = c.GX_SetDispCopyYScale(@intToFloat(f32, screenMode.xfbHeight) / @intToFloat(f32, screenMode.efbHeight));
+    c.GX_SetScissor(0, 0, screenMode.fbWidth, screenMode.efbHeight);
+    c.GX_SetDispCopySrc(0, 0, screenMode.fbWidth, screenMode.efbHeight);
+    c.GX_SetDispCopyDst(screenMode.fbWidth, screenMode.xfbHeight);
+    c.GX_SetCopyFilter(screenMode.aa, &screenMode.sample_pattern, c.GX_TRUE, &screenMode.vfilter);
+    c.GX_SetFieldMode(screenMode.field_rendering, @boolToInt(screenMode.viHeight == 2 * screenMode.xfbHeight));
 
     c.GX_SetCullMode(c.GX_CULL_NONE);
     c.GX_CopyDisp(xfb, c.GX_TRUE);
     c.GX_SetDispCopyGamma(c.GX_GM_1_0);
 
+    var camera = c.guVector{ .x = 0.0, .y = 0.0, .z = 0.0 };
+    var up = c.guVector{ .x = 0.0, .y = 1.0, .z = 0.0 };
+    var look = c.guVector{ .x = 0.0, .y = 0.0, .z = -1.0 };
+
     c.guPerspective(&projection, 60, 1.33, 10.0, 300.0);
     c.GX_LoadProjectionMtx(&projection, c.GX_PERSPECTIVE);
+
     c.GX_ClearVtxDesc();
     c.GX_SetVtxDesc(c.GX_VA_POS, c.GX_INDEX8);
     c.GX_SetVtxDesc(c.GX_VA_CLR0, c.GX_INDEX8);
@@ -71,21 +66,27 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
 
     while (true) {
         c.guLookAt(&view, &camera, &up, &look);
-        c.GX_SetViewport(0, 0, @intToFloat(f32, rmode.fbWidth), @intToFloat(f32, rmode.efbHeight), 0, 0);
+        c.GX_SetViewport(0, 0, @intToFloat(f32, screenMode.fbWidth), @intToFloat(f32, screenMode.efbHeight), 0, 1);
         c.GX_InvVtxCache();
         c.GX_InvalidateTexAll();
+
+        var model: c.Mtx = undefined;
+
         c.guMtxIdentity(&model);
         c.guMtxTransApply(&model, &model, 0.0, 0.0, -50.0);
         c.guMtxConcat(&view, &model, &model);
+
         c.GX_LoadPosMtxImm(&model, c.GX_PNMTX0);
 
         c.GX_Begin(c.GX_TRIANGLES, c.GX_VTXFMT0, 3);
+
         c.GX_Position1x8(0);
         c.GX_Color1x8(0);
         c.GX_Position1x8(1);
         c.GX_Color1x8(1);
         c.GX_Position1x8(2);
         c.GX_Color1x8(2);
+
         c.GX_End();
 
         c.GX_DrawDone();
@@ -93,6 +94,7 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
         c.GX_SetColorUpdate(c.GX_TRUE);
         c.GX_CopyDisp(xfb, c.GX_TRUE);
         c.GX_Flush();
+
         c.VIDEO_WaitVSync();
     }
 }
