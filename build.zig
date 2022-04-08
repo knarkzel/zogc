@@ -2,7 +2,7 @@ const std = @import("std");
 const Builder = std.build.Builder;
 
 const name = "zick";
-const wii_ip = "192.168.0.1";
+const wii_ip = "192.168.11.171";
 const devkitpro = "/opt/devkitpro";
 
 pub fn build(b: *Builder) void {
@@ -29,10 +29,12 @@ pub fn build(b: *Builder) void {
 
     const dolphin = b.addSystemCommand(&[_][]const u8{ "dolphin-emu", "-a", "LLE", "-e", "build/" ++ name ++ ".dol" });
     const run_step = b.step("run", "Run in Dolphin");
+    run_step.dependOn(&dol.step);
     run_step.dependOn(&dolphin.step);
 
     const wiiload = b.addSystemCommand(&[_][]const u8{ devkitpro ++ "/tools/bin/wiiload", "build/" ++ name ++ ".dol" });
     wiiload.setEnvironmentVariable("WIILOAD", "tcp:" ++ wii_ip);
     const deploy_step = b.step("deploy", "Deploy to Wii");
+    deploy_step.dependOn(&dol.step);
     deploy_step.dependOn(&wiiload.step);
 }

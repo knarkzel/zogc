@@ -41,7 +41,7 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
     const buffer: [fifo_size]u32 = undefined;
     var fifo_buffer = c.MEM_K0_TO_K1(&buffer[0]) orelse unreachable;
     _ = c.GX_Init(fifo_buffer, fifo_size);
-    c.GX_SetCopyClear(c.GXColor{ .r = 0, .g = 0, .b = 0, .a = 255 }, 0x00ffffff);
+    // c.GX_SetCopyClear(c.GXColor{ .r = 0, .g = 0, .b = 0, .a = 255 }, 0x00ffffff);
     c.GX_SetViewport(0, 0, @intToFloat(f32, rmode.fbWidth), @intToFloat(f32, rmode.efbHeight), 0, 1);
     _ = c.GX_SetDispCopyYScale(@intToFloat(f32, rmode.xfbHeight) / @intToFloat(f32, rmode.efbHeight));
     c.GX_SetScissor(0, 0, rmode.fbWidth, rmode.efbHeight);
