@@ -1,8 +1,6 @@
 # zick
 
-Work in progress game engine for the Wii in Zig. To run this project you
-need `zig`, `dolphin-emu`, [devkitPro](https://devkitpro.org/wiki/Getting_Started).
-Then run following commands:
+Game engine for the Wii in Zig. Dependencies: `zig`, `dolphin-emu`, [devkitPro](https://devkitpro.org/wiki/Getting_Started).
 
 ```bash
 git clone https://github.com/knarkzel/zick
