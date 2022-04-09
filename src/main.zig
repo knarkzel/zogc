@@ -1,9 +1,11 @@
 const std = @import("std");
-const c = @import("c.zig");
+const c = @cImport({
+    @cInclude("gccore.h");
+});
 
+const fifo_size: u32 = 256 * 1024;
 var screenMode: *c.GXRModeObj = undefined;
 var frameBuffer: *anyopaque = undefined;
-const fifo_size: u32 = 256 * 1024;
 
 var vertices: [9]i16 align(32) = [9]i16{ 0, 15, 0, -15, -15, 0, 15, -15, 0 };
 
@@ -29,7 +31,7 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
     c.VIDEO_SetBlack(false);
     c.VIDEO_Flush();
 
-    const buffer: [fifo_size]u32 = undefined;
+    var buffer: [fifo_size]u32 = undefined;
     fifo_buffer = c.MEM_K0_TO_K1(&buffer[0]) orelse unreachable;
 
     _ = c.GX_Init(fifo_buffer, fifo_size);
