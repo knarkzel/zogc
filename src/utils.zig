@@ -4,6 +4,10 @@ pub fn framebuffer(mode: *c.GXRModeObj) *anyopaque {
     return c.MEM_K0_TO_K1(c.SYS_AllocateFramebuffer(mode)) orelse unreachable;
 }
 
+pub fn print(input: []const u8) void {
+    _ = c.printf(@ptrCast([*c]const u8, input));
+}
+
 /// Color: 0xRRGGBBAA
 pub fn triangle(points: [3][2]f32, color: u32) void {
     c.GX_Begin(c.GX_TRIANGLES, c.GX_VTXFMT0, 3);
