@@ -57,6 +57,12 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
 
     var ident: c.Mtx = undefined;
     c.guMtxIdentity(&ident);
+
+    // Make (0, 0) be origin
+    ident[0][3] = -0.5;
+    ident[1][3] = 0.5;
+    // ident[2][3] = -5;
+
     c.GX_LoadPosMtxImm(&ident, c.GX_PNMTX0);
     c.GX_LoadProjectionMtx(&ident, c.GX_ORTHOGRAPHIC);
 
@@ -76,9 +82,10 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
 
         // Drawing starts here
         const color = 0xFFFFFFFF;
-        const points = .{ .{ -5, 0 }, .{ 5, 0 }, .{ 5, 5 } };
-        triangle(points, color);
-
+        triangle(.{ .{ 0, 0 }, .{ 0.5, 0 }, .{ 0.5, -0.5 } }, color);
+        triangle(.{ .{ 0.5, -0.5 }, .{ 1, -0.5 }, .{ 1, -1 } }, color);
+        triangle(.{ .{ 1, -1 }, .{ 1.5, -1 }, .{ 1.5, -1.5 } }, color);
+        triangle(.{ .{ 1.5, -1.5 }, .{ 2, -1.5 }, .{ 2, -2 } }, color);
         // Drawing ends here
 
         c.GX_DrawDone();
