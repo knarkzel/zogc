@@ -1,11 +1,14 @@
 const c = @import("c.zig");
 
+var x: f32 = 0;
+var y: f32 = 0;
+
 pub fn draw() void {
-    const color = 0xFFFFFFFF;
-    triangle(.{ .{ 0, 0 }, .{ 0.5, 0 }, .{ 0.5, -0.5 } }, color);
-    triangle(.{ .{ 0.5, -0.5 }, .{ 1, -0.5 }, .{ 1, -1 } }, color);
-    triangle(.{ .{ 1, -1 }, .{ 1.5, -1 }, .{ 1.5, -1.5 } }, color);
-    triangle(.{ .{ 1.5, -1.5 }, .{ 2, -1.5 }, .{ 2, -2 } }, color);
+    x += 0.01;
+    y -= 0.01;
+    if (x > 1) x = 0;
+    if (y < -1) y = 0;
+    triangle(.{ .{ x, y }, .{ x / 2 + 0.5, y / 2 }, .{ x / 2 + 0.5, y - 0.5 } }, 0xFFFFFFFF);
 }
 
 /// Color: 0xRRGGBBAA
