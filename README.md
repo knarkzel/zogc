@@ -9,7 +9,7 @@ cd zick/
 zig build
 ```
 
-- To build and run inside Dolphin, do `zig build run`
+- To build and run with Dolphin, do `zig build run`
 - To build and deploy to Wii over network (must be in Homebrew menu), do `zig build deploy`
 
 # Get Wii IP

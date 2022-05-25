@@ -2,7 +2,7 @@ const std = @import("std");
 const Builder = std.build.Builder;
 
 const name = "zick";
-const wii_ip = "192.168.11.24";
+const wii_ip = "192.168.11.171";
 const devkitpro = "/opt/devkitpro";
 
 pub fn build(b: *Builder) void {

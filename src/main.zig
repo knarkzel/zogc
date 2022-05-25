@@ -19,17 +19,22 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
     const video = Video.init();
     console = Console.init(video.mode);
 
-    var x: f32 = 0;
-    var y: f32 = 0;
-    var it: u8 = 0;
+    var x: f32 = 0.5;
+    var y: f32 = -0.5;
+    var dx: f32 = 0.01;
+    var dy: f32 = 0.01;
     while (true) {
         video.start();
-        it += 1;
-        x += 0.01;
-        y -= 0.01;
-        if (x > 1) x = 0;
-        if (y < -1) y = 0;
-        utils.triangle(.{ .{ x, y }, .{ x / 2 + 0.5, y / 2 }, .{ x / 2 + 0.5, y - 0.5 } }, 0xFFFFFFFF);
+        const points: [3][2]f32 = .{ .{ x, y }, .{ x / 8 + 0.5, y * 2 }, .{ x / 2 + 0.5, y * 3 } };
+        for (points) |point| {
+            if (point[0] > 2) dx = -0.01;
+            if (point[0] < 0) dx = 0.01;
+            if (point[1] < -2) dy = 0.01;
+            if (point[1] > 0) dy = -0.01;
+        }
+        x += dx;
+        y += dy;
+        utils.triangle(points, 0xFFFFFFFF);
         video.finish();
     }
 }
