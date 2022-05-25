@@ -56,13 +56,8 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
     c.GX_SetTevOrder(c.GX_TEVSTAGE0, c.GX_TEXCOORD0, c.GX_TEXMAP0, c.GX_COLOR0A0);
 
     var ident: c.Mtx = undefined;
-    var perspective: c.Mtx44 = undefined;
-
     c.guMtxIdentity(&ident);
-    c.guMtxTransApply(&ident, &ident, 0, 0, -100); // TODO
     c.GX_LoadPosMtxImm(&ident, c.GX_PNMTX0);
-
-    c.guOrtho(&perspective, 0, @intToFloat(f32, screenMode.efbHeight), 0, @intToFloat(f32, screenMode.fbWidth), 0, 1000);
     c.GX_LoadProjectionMtx(&ident, c.GX_ORTHOGRAPHIC);
 
     c.GX_SetViewport(0, 0, @intToFloat(f32, screenMode.fbWidth), @intToFloat(f32, screenMode.efbHeight), 0, 0);
@@ -80,10 +75,9 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
         c.GX_SetViewport(0, 0, @intToFloat(f32, screenMode.fbWidth), @intToFloat(f32, screenMode.efbHeight), 0, 0);
 
         // Drawing starts here
-
-        const vertices = .{ .{ 0, 0 }, .{ 50, 0 }, .{ 50, 50 }, .{ 0, 50 } };
         const color = 0xFFFFFFFF;
-        square(vertices, color);
+        const points = .{ .{ -5, 0 }, .{ 5, 0 }, .{ 5, 5 } };
+        triangle(points, color);
 
         // Drawing ends here
 
@@ -98,9 +92,9 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
 }
 
 /// Color: 0xRRGGBBAA
-fn triangle(vertices: [3][2]f32, color: u32) void {
+fn triangle(points: [3][2]f32, color: u32) void {
     c.GX_Begin(c.GX_TRIANGLES, c.GX_VTXFMT0, 3);
-    for (vertices) |point| {
+    for (points) |point| {
         c.GX_Position3f32(point[0], point[1], 0);
         c.GX_Color1u32(color);
     }
@@ -108,9 +102,9 @@ fn triangle(vertices: [3][2]f32, color: u32) void {
 }
 
 /// Color: 0xRRGGBBAA
-fn square(vertices: [4][2]f32, color: u32) void {
+fn square(points: [4][2]f32, color: u32) void {
     c.GX_Begin(c.GX_QUADS, c.GX_VTXFMT0, 4);
-    for (vertices) |point| {
+    for (points) |point| {
         c.GX_Position3f32(point[0], point[1], 0);
         c.GX_Color1u32(color);
     }
