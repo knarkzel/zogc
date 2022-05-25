@@ -21,7 +21,7 @@ pub fn build(b: *Builder) void {
         .cpu_features_add = std.Target.powerpc.featureSet(&.{.hard_float}),
     });
 
-    const elf = b.addSystemCommand(&[_][]const u8{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii", "-lwiiuse", "-lbte", "-logc", "-lm", "-o", "build/" ++ name ++ ".elf" });
+    const elf = b.addSystemCommand(&[_][]const u8{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii", "-logc", "-lmad", "-o", "build/" ++ name ++ ".elf" });
     const dol = b.addSystemCommand(&[_][]const u8{ "elf2dol", "build/" ++ name ++ ".elf", "build/" ++ name ++ ".dol" });
     b.default_step.dependOn(&dol.step);
     dol.step.dependOn(&elf.step);
