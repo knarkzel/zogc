@@ -21,18 +21,18 @@ pub fn build(b: *Builder) void {
         .cpu_features_add = std.Target.powerpc.featureSet(&.{.hard_float}),
     });
 
-    const elf = b.addSystemCommand(&[_][]const u8{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii", "-logc", "-lmad", "-o", "build/" ++ name ++ ".elf" });
-    const dol = b.addSystemCommand(&[_][]const u8{ "elf2dol", "build/" ++ name ++ ".elf", "build/" ++ name ++ ".dol" });
+    const elf = b.addSystemCommand(&.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii", "-logc", "-lmad", "-o", "build/" ++ name ++ ".elf" });
+    const dol = b.addSystemCommand(&.{ "elf2dol", "build/" ++ name ++ ".elf", "build/" ++ name ++ ".dol" });
     b.default_step.dependOn(&dol.step);
     dol.step.dependOn(&elf.step);
     elf.step.dependOn(&obj.step);
 
-    const dolphin = b.addSystemCommand(&[_][]const u8{ "dolphin-emu", "-a", "LLE", "-e", "build/" ++ name ++ ".dol" });
+    const dolphin = b.addSystemCommand(&.{ "dolphin-emu", "-a", "LLE", "-e", "build/" ++ name ++ ".dol" });
     const run_step = b.step("run", "Run in Dolphin");
     run_step.dependOn(&dol.step);
     run_step.dependOn(&dolphin.step);
 
-    const wiiload = b.addSystemCommand(&[_][]const u8{ devkitpro ++ "/tools/bin/wiiload", "build/" ++ name ++ ".dol" });
+    const wiiload = b.addSystemCommand(&.{ devkitpro ++ "/tools/bin/wiiload", "build/" ++ name ++ ".dol" });
     wiiload.setEnvironmentVariable("WIILOAD", "tcp:" ++ wii_ip);
     const deploy_step = b.step("deploy", "Deploy to Wii");
     deploy_step.dependOn(&dol.step);
