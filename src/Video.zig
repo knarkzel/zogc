@@ -22,9 +22,10 @@ pub fn init() Video {
     var fifo_buffer = c.MEM_K0_TO_K1(&buffer[0]) orelse unreachable;
 
     _ = c.GX_Init(fifo_buffer, fifo_size);
+    c.GX_SetViewport(0, 0, @intToFloat(f32, mode.fbWidth), @intToFloat(f32, mode.efbHeight), 0, 1);
 
-    const background = c.GXColor{ .r = 0, .g = 0, .b = 0, .a = 0xFF };
-    c.GX_SetCopyClear(background, 0x00FFFFFF);
+    // const background = c.GXColor{ .r = 0, .g = 0, .b = 0, .a = 0xFF };
+    // c.GX_SetCopyClear(background, 0x00FFFFFF);
 
     const y_scale = c.GX_GetYScaleFactor(mode.xfbHeight, mode.efbHeight);
     _ = c.GX_SetDispCopyYScale(y_scale);
@@ -33,6 +34,10 @@ pub fn init() Video {
     c.GX_SetDispCopyDst(mode.fbWidth, mode.xfbHeight);
     c.GX_SetCopyFilter(mode.aa, &mode.sample_pattern, c.GX_TRUE, &mode.vfilter);
     c.GX_SetFieldMode(mode.field_rendering, @boolToInt(mode.viHeight == 2 * mode.xfbHeight));
+
+    c.GX_SetCullMode(c.GX_CULL_NONE);
+    c.GX_CopyDisp(fbs[fbi], c.GX_TRUE);
+    c.GX_SetDispCopyGamma(c.GX_GM_1_0);
 
     c.GX_InvVtxCache();
     c.GX_ClearVtxDesc();
@@ -46,6 +51,8 @@ pub fn init() Video {
     c.GX_SetVtxAttrFmt(c.GX_VTXFMT0, c.GX_VA_CLR0, c.GX_CLR_RGBA, c.GX_RGBA8, 0);
 
     c.GX_SetNumChans(1);
+    c.GX_SetNumTexGens(0);
+    c.GX_SetTevOrder(c.GX_TEVSTAGE0, c.GX_TEXCOORDNULL, c.GX_TEXMAP_NULL, c.GX_COLOR0A0);
     c.GX_SetTevOp(c.GX_TEVSTAGE0, c.GX_PASSCLR);
 
     // [0, 0] -> origin
@@ -60,7 +67,7 @@ pub fn init() Video {
 }
 
 pub fn start(self: Video) void {
-    c.GX_SetViewport(0, 0, @intToFloat(f32, self.mode.fbWidth), @intToFloat(f32, self.mode.efbHeight), 0, 0);
+    c.GX_SetViewport(0, 0, @intToFloat(f32, self.mode.fbWidth), @intToFloat(f32, self.mode.efbHeight), 0, 1);
 }
 
 pub fn finish(self: Video) void {
