@@ -6,10 +6,16 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
     c.VIDEO_Init();
 
     var screenMode: *c.GXRModeObj = c.VIDEO_GetPreferredMode(null);
-    var xfb = c.MEM_K0_TO_K1(c.SYS_AllocateFramebuffer(screenMode)) orelse unreachable;
+
+    // Framebuffers
+    var fbi: u8 = 0;
+    var fbs: [2]*anyopaque = .{
+        c.MEM_K0_TO_K1(c.SYS_AllocateFramebuffer(screenMode)) orelse unreachable,
+        c.MEM_K0_TO_K1(c.SYS_AllocateFramebuffer(screenMode)) orelse unreachable
+    };
 
     c.VIDEO_Configure(screenMode);
-    c.VIDEO_SetNextFramebuffer(xfb);
+    c.VIDEO_SetNextFramebuffer(fbs[fbi]);
     c.VIDEO_SetBlack(false);
     c.VIDEO_Flush();
 
@@ -57,7 +63,14 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
         c.GX_SetViewport(0, 0, @intToFloat(f32, screenMode.fbWidth), @intToFloat(f32, screenMode.efbHeight), 0, 0);
         game.draw(); // Draw logic
         c.GX_DrawDone();
-        c.GX_CopyDisp(xfb, c.GX_TRUE);
+
+        // Flip framebuffer
+        fbi ^= 1;
+        c.GX_SetZMode(c.GX_TRUE, c.GX_LEQUAL, c.GX_TRUE);
+        c.GX_SetColorUpdate(c.GX_TRUE);
+        c.GX_CopyDisp(fbs[fbi], c.GX_TRUE);
+        c.VIDEO_SetNextFramebuffer(fbs[fbi]);
+        c.VIDEO_Flush();
         c.VIDEO_WaitVSync();
     }
 }
