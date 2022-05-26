@@ -37,4 +37,13 @@ pub fn build(b: *Builder) void {
     const deploy_step = b.step("deploy", "Deploy to Wii");
     deploy_step.dependOn(&dol.step);
     deploy_step.dependOn(&wiiload.step);
+
+    const line_step = b.step("line", "Get line from crash address");
+    line_step.dependOn(&dol.step);
+    if (b.args) |args| {
+        for (args) |arg| {
+            const addr2line = b.addSystemCommand(&.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-addr2line", "-e", "build/" ++ name ++ ".elf", arg });
+            line_step.dependOn(&addr2line.step);
+        }
+    }
 }
