@@ -21,8 +21,7 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
 
     while (true) {
         video.start();
-        utils.triangle(.{ .{ 10, 10 }, .{ 200, 10 }, .{ 200, 200 } }, 0xFFFFFFFF);
-        utils.triangle(.{ .{ 100, 100 }, .{ 150, 10 }, .{ 150, 150 } }, 0xFFFFFFFF);
+        utils.triangle(.{ .{ 10, 10 }, .{ 210, 10 }, .{ 210, 210 } }, .{ 1, 1, 1 });
         video.finish();
     }
 }

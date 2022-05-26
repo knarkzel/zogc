@@ -8,22 +8,20 @@ pub fn print(input: []const u8) void {
     _ = c.printf(@ptrCast([*c]const u8, input));
 }
 
-/// Color: 0xRRGGBBAA
-pub fn triangle(points: [3][2]f32, color: u32) void {
+pub fn triangle(points: [3][2]f32, color: [3]f32) void {
     c.GX_Begin(c.GX_TRIANGLES, c.GX_VTXFMT0, 3);
     for (points) |point| {
-        c.GX_Position3f32(point[0], point[1], 0);
-        c.GX_Color1u32(color);
+        c.GX_Position2f32(point[0], point[1]);
+        c.GX_Color3f32(color[0], color[1], color[2]);
     }
     c.GX_End();
 }
 
-/// Color: 0xRRGGBBAA
-pub fn square(points: [4][2]f32, color: u32) void {
+pub fn square(points: [4][2]f32, color: [3]f32) void {
     c.GX_Begin(c.GX_QUADS, c.GX_VTXFMT0, 4);
     for (points) |point| {
-        c.GX_Position3f32(point[0], point[1], 0);
-        c.GX_Color1u32(color);
+        c.GX_Position2f32(point[0], point[1]);
+        c.GX_Color3f32(color[0], color[1], color[2]);
     }
     c.GX_End();
 }

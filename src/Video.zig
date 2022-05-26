@@ -56,8 +56,8 @@ pub fn init() Video {
     // so for ex. in the first call we are sending position data with
     // 3 values X,Y,Z of size F32. scale sets the number of fractional
     // bits for non float data.
-    c.GX_SetVtxAttrFmt(c.GX_VTXFMT0, c.GX_VA_POS, c.GX_POS_XYZ, c.GX_F32, 0);
-    c.GX_SetVtxAttrFmt(c.GX_VTXFMT0, c.GX_VA_CLR0, c.GX_CLR_RGBA, c.GX_RGBA8, 0);
+    c.GX_SetVtxAttrFmt(c.GX_VTXFMT0, c.GX_VA_POS, c.GX_POS_XY, c.GX_F32, 0);
+    c.GX_SetVtxAttrFmt(c.GX_VTXFMT0, c.GX_VA_CLR0, c.GX_CLR_RGBA, c.GX_RGB8, 0);
 
     c.GX_SetNumChans(1);
     c.GX_SetNumTexGens(0);
