@@ -3,7 +3,12 @@ const Builder = std.build.Builder;
 
 const name = "zick";
 const wii_ip = "192.168.11.171";
-const devkitpro = "/opt/devkitpro";
+const devkitpro = tag: {
+    switch (@import("builtin").os.tag) {
+        .windows => break :tag "C:/devkitPro",
+        else => break :tag "/opt/devkitpro",
+    }
+};
 
 pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
