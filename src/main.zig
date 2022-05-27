@@ -20,6 +20,8 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
 
     // MP3
     const sample_mp3 = @embedFile("sample.mp3");
+    c.ASND_Init();
+    c.MP3Player_Init();
     _ = c.MP3Player_PlayBuffer(sample_mp3, sample_mp3.len, null);
 
     while (true) {
