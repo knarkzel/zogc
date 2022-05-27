@@ -4,11 +4,10 @@ const utils = @import("utils.zig");
 const Video = @import("Video.zig");
 const Console = @import("Console.zig");
 
-var console: *anyopaque = undefined;
-
+var stdout: *anyopaque = undefined;
 pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
-    c.GX_CopyDisp(console, c.GX_TRUE);
-    c.VIDEO_SetNextFramebuffer(console);
+    c.GX_CopyDisp(stdout, c.GX_TRUE);
+    c.VIDEO_SetNextFramebuffer(stdout);
     c.VIDEO_Flush();
     utils.print("PANIC!\n");
     utils.print(message);
@@ -17,7 +16,7 @@ pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
 
 export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
     const video = Video.init();
-    console = Console.init(video.mode);
+    Console.init(video.mode, &stdout);
 
     while (true) {
         video.start();
