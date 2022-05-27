@@ -19,9 +19,19 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
     var video = Video.init();
     console = Console.init(video.mode);
 
+    var x: f32 = 0;
+    var y: f32 = 0;
+    var dx: f32 = 1;
+    var dy: f32 = 1;
     while (true) {
         video.start();
-        const points = .{ .{ 16, 16 }, .{ 48, 16 }, .{ 48, 48 }, .{ 16, 48 } };
+        x += dx;
+        y += dy;
+        if (x < 0) dx = 1;
+        if (x + 32 > 640) dx = -1;
+        if (y < 0) dy = 1;
+        if (y + 32 > 480) dy = -1;
+        const points = .{ .{ x, y }, .{ x + 32, y }, .{ x + 32, y + 32 }, .{ x, y + 32 } };
         const coords = .{ .{ 0, 0 }, .{ 0.5, 0.0 }, .{ 0.5, 0.5 }, .{ 0.0, 0.5 } };
         utils.texture(points, coords);
         video.finish();
