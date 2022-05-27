@@ -19,6 +19,7 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
     Console.init(video.mode, &stdout);
 
     // Audio
+    c.ASND_Init();
     const sample_ogg = &struct {
         var bytes = @embedFile("sample.ogg").*;
     }.bytes;
