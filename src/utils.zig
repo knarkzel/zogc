@@ -25,3 +25,14 @@ pub fn square(points: [4][2]f32, color: [3]f32) void {
     }
     c.GX_End();
 }
+
+pub fn texture(points: [4][2]f32, coords: [4][2]f32) void {
+    c.GX_Begin(c.GX_QUADS, c.GX_VTXFMT0, 4);
+    var i: u8 = 0;
+    while (i < 4) {
+        c.GX_Position2f32(points[i][0], points[i][1]);
+        c.GX_TexCoord2f32(coords[i][0], coords[i][1]);
+        i += 1;
+    }
+    c.GX_End();
+}

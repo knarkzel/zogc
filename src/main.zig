@@ -16,12 +16,14 @@ pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
 }
 
 export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
-    const video = Video.init();
+    var video = Video.init();
     console = Console.init(video.mode);
 
     while (true) {
         video.start();
-        utils.triangle(.{ .{ 10, 10 }, .{ 210, 10 }, .{ 210, 210 } }, .{ 1, 1, 1 });
+        const points = .{ .{ 16, 16 }, .{ 48, 16 }, .{ 48, 48 }, .{ 16, 48 } };
+        const coords = .{ .{ 0, 0 }, .{ 0.5, 0.0 }, .{ 0.5, 0.5 }, .{ 0.0, 0.5 } };
+        utils.texture(points, coords);
         video.finish();
     }
 }
