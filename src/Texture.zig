@@ -8,8 +8,21 @@ pub fn init() Texture {
     return .{ .objects = .{ null, null, null, null, null, null, null, null } };
 }
 
+/// Loads TPL from path. `id` decides which texture is loaded.
+pub fn load_tpl(self: *Texture, comptime path: []const u8, id: i32) void {
+    // Data lives on forever, same as object
+    const data = &struct {
+        var bytes = @embedFile(path).*;
+    }.bytes;
+    var sprite: c.TPLFile = undefined;
+    var object: c.GXTexObj = undefined;
+    _ = c.TPL_OpenTPLFromMemory(&sprite, data, data.len);
+    _ = c.TPL_GetTexture(&sprite, id, &object);
+    self.load_texture(&object);
+}
+
 /// Load texture into register by finding an empty slot.
-pub fn load(self: *Texture, texture: *c.GXTexObj) void {
+fn load_texture(self: *Texture, texture: *c.GXTexObj) void {
     for (self.objects) |*object, i| {
         if (object.* == null) {
             // Delete cache
@@ -42,17 +55,4 @@ pub fn load(self: *Texture, texture: *c.GXTexObj) void {
             break;
         }
     }
-}
-
-/// Open TPL from path. `id` decides which texture is loaded.
-pub fn load_tpl(self: *Texture, comptime path: []const u8, id: i32) void {
-    // Data lives on forever, same as object
-    const data = &struct {
-        var bytes = @embedFile(path).*;
-    }.bytes;
-    var sprite: c.TPLFile = undefined;
-    var object: c.GXTexObj = undefined;
-    _ = c.TPL_OpenTPLFromMemory(&sprite, data, data.len);
-    _ = c.TPL_GetTexture(&sprite, id, &object);
-    self.load(&object);
 }
