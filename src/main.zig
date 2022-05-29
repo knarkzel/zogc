@@ -2,6 +2,7 @@ const c = @import("c.zig");
 const std = @import("std");
 const utils = @import("utils.zig");
 const Video = @import("Video.zig");
+const Audio = @import("Audio.zig");
 const Texture = @import("Texture.zig");
 const Console = @import("Console.zig");
 
@@ -17,8 +18,14 @@ pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
 export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
     var video = Video.init();
     Console.init(video.mode, &stdout);
+
+    // Texture
     var texture = Texture.init();
-    texture.load_tpl("textures.tpl", 0);
+    texture.load_tpl("../assets/textures.tpl", 0);
+
+    // Music
+    var audio = Audio.init();
+    audio.load_ogg("../assets/sample.ogg", .infinite_time);
 
     while (true) {
         video.start();

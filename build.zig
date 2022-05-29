@@ -12,6 +12,12 @@ pub fn build(b: *Builder) void {
     obj.linkLibC();
     obj.setLibCFile(std.build.FileSource{ .path = "libc.txt" });
     obj.addIncludeDir("vendor/libogc/include");
+
+    // oggplayer
+    obj.addIncludeDir("vendor/oggplayer");
+    obj.addCSourceFile("vendor/oggplayer/oggplayer.c", &.{ "-I", "/opt/devkitpro/portlibs/ppc/include" });
+
+    // target
     obj.setBuildMode(mode);
     obj.setTarget(.{
         .cpu_arch = .powerpc,
@@ -21,7 +27,7 @@ pub fn build(b: *Builder) void {
         .cpu_features_add = std.Target.powerpc.featureSet(&.{.hard_float}),
     });
 
-    const elf = b.addSystemCommand(&.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii", "-logc", "-lm", "-o", "build/" ++ name ++ ".elf" });
+    const elf = b.addSystemCommand(&.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii", "-L" ++ devkitpro ++ "/portlibs/ppc/lib", "-lvorbisidec", "-logg", "-lasnd", "-logc", "-o", "build/" ++ name ++ ".elf" });
     const dol = b.addSystemCommand(&.{ "elf2dol", "build/" ++ name ++ ".elf", "build/" ++ name ++ ".dol" });
     b.default_step.dependOn(&dol.step);
     dol.step.dependOn(&elf.step);

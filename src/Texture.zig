@@ -5,7 +5,7 @@ const Texture = @This();
 objects: [8]?*c.GXTexObj,
 
 pub fn init() Texture {
-    return .{ .objects = .{ null, null, null, null, null, null, null, null } };
+    return .{ .objects = .{null} ** 8 };
 }
 
 /// Loads TPL from path. `id` decides which texture is loaded.
