@@ -27,6 +27,8 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) void {
     _ = c.PAD_Init();
     var x: f32 = 0;
     var y: f32 = 0; 
+    var w: f32 = 32;
+    var h: f32 = 32;
 
     var moveSpeed: f32 = 5;
 
@@ -62,7 +64,15 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) void {
             break;
         }
 
-        const points = utils.rectangle(x, y, 32, 32);
+        var wTemp: f32 = w;
+        var hTemp: f32 = h;
+
+        if (buttonsDown & c.PAD_BUTTON_B != 0) {
+            wTemp *= 2;
+            hTemp *= 2;
+        }
+
+        const points = utils.rectangle(x, y, wTemp, hTemp);
         const coords = utils.rectangle(0, 0, 0.5, 0.5);
         utils.texture(points, coords);
         video.finish();
