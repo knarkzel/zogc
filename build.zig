@@ -1,10 +1,15 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const Builder = std.build.Builder;
 
 const name = "zick";
 const wii_ip = "192.168.11.171";
 const devkitpro = "/opt/devkitpro";
-const dolphin = "/Applications/Dolphin.app/Contents/MacOS/Dolphin";
+const dolphin = switch (builtin.target.os.tag) {
+    .macos => "/Applications/Dolphin.app/Contents/MacOS/Dolphin",
+    .windows => "Dolphin",
+    else => "dolphin-emu",
+};
 
 pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
