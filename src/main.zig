@@ -14,17 +14,55 @@ pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
     while (true) {}
 }
 
-export fn main(_: c_int, _: [*]const [*:0]const u8) noreturn {
+export fn main(_: c_int, _: [*]const [*:0]const u8) void {
     var video = Video.init();
     Console.init(video.mode, &stdout);
+
 
     // Texture
     var texture = Texture.init();
     texture.load_tpl("../assets/textures.tpl", 0);
 
+    // Input
+    _ = c.PAD_Init();
+    var x: f32 = 0;
+    var y: f32 = 0; 
+
+    var moveSpeed: f32 = 5;
+
+
     while (true) {
         video.start();
-        const points = utils.rectangle(0, 0, 32, 32);
+
+        _ = c.PAD_ScanPads();
+        var buttonsDown: u16 = c.PAD_ButtonsHeld(0);
+
+        // Left
+        if (buttonsDown & c.PAD_BUTTON_LEFT != 0) {
+            x -= moveSpeed;
+        }
+
+        // Right
+        if (buttonsDown & c.PAD_BUTTON_RIGHT != 0) {
+            x += moveSpeed; 
+        }
+
+        // Up 
+        if (buttonsDown & c.PAD_BUTTON_UP != 0) {
+            y -= moveSpeed;
+        }
+
+        // Down
+        if (buttonsDown & c.PAD_BUTTON_DOWN != 0) {
+            y += moveSpeed;
+        }
+
+        // Exit
+        if (buttonsDown & c.PAD_BUTTON_START != 0) {
+            break;
+        }
+
+        const points = utils.rectangle(x, y, 32, 32);
         const coords = utils.rectangle(0, 0, 0.5, 0.5);
         utils.texture(points, coords);
         video.finish();

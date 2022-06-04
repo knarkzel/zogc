@@ -4,6 +4,7 @@ const Builder = std.build.Builder;
 const name = "zick";
 const wii_ip = "192.168.11.171";
 const devkitpro = "/opt/devkitpro";
+const dolphin = "/Applications/Dolphin.app/Contents/MacOS/Dolphin";
 
 pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
@@ -29,10 +30,10 @@ pub fn build(b: *Builder) void {
     dol.step.dependOn(&elf.step);
     elf.step.dependOn(&obj.step);
 
-    const dolphin = b.addSystemCommand(&.{ "dolphin-emu", "-a", "LLE", "-e", "build/" ++ name ++ ".dol" });
+    const emulator = b.addSystemCommand(&.{ dolphin, "-a", "LLE", "-e", "build/" ++ name ++ ".dol" });
     const run_step = b.step("run", "Run in Dolphin");
     run_step.dependOn(&dol.step);
-    run_step.dependOn(&dolphin.step);
+    run_step.dependOn(&emulator.step);
 
     const wiiload = b.addSystemCommand(&.{ devkitpro ++ "/tools/bin/wiiload", "build/" ++ name ++ ".dol" });
     wiiload.setEnvironmentVariable("WIILOAD", "tcp:" ++ wii_ip);
