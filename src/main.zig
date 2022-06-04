@@ -31,6 +31,7 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) void {
     var h: f32 = 32;
 
     var moveSpeed: f32 = 5;
+    var deadzone: i8 = 30;
 
 
     while (true) {
@@ -38,6 +39,30 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) void {
 
         _ = c.PAD_ScanPads();
         var buttonsDown: u16 = c.PAD_ButtonsHeld(0);
+
+        // TEMPORARY analog X input
+        if (c.PAD_StickX(0) > deadzone or c.PAD_StickX(0) < -deadzone) {
+            
+            var value: i8 = c.PAD_StickX(0);
+
+            if (value < 0) {
+                x -= moveSpeed;
+            } else {
+                x += moveSpeed;
+            }
+        }
+
+        // TEMPORARY analog Y input
+        if (c.PAD_StickY(0) > deadzone or c.PAD_StickY(0) < -deadzone) {
+            
+            var value: i8 = c.PAD_StickY(0);
+
+            if (value < 0) {
+                y += moveSpeed;
+            } else {
+                y -= moveSpeed;
+            }
+        }
 
         // Left
         if (buttonsDown & c.PAD_BUTTON_LEFT != 0) {
