@@ -64,15 +64,19 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) void {
             break;
         }
 
+        var xTemp: f32 = x;
+        var yTemp: f32 = y;
         var wTemp: f32 = w;
         var hTemp: f32 = h;
 
         if (buttonsDown & c.PAD_BUTTON_B != 0) {
+            xTemp = x - (w / 2);
+            yTemp = y - (h / 2);
             wTemp *= 2;
             hTemp *= 2;
         }
 
-        const points = utils.rectangle(x, y, wTemp, hTemp);
+        const points = utils.rectangle(xTemp, yTemp, wTemp, hTemp);
         const coords = utils.rectangle(0, 0, 0.5, 0.5);
         utils.texture(points, coords);
         video.finish();
