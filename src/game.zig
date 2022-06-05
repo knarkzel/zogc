@@ -1,7 +1,7 @@
 const c = @import("ogc/c.zig");
 const Video = @import("ogc/Video.zig");
 const Texture = @import("ogc/Texture.zig");
-const pad = @import("ogc/pad.zig");
+const Pad = @import("ogc/Pad.zig");
 const utils = @import("ogc/utils.zig");
 
 const Player = struct {
@@ -35,7 +35,7 @@ pub fn run(video: *Video) void {
 
     while (true) {
         // Handle new players
-        for (pad.update()) |controller, i| {
+        for (Pad.update()) |controller, i| {
             if (controller and players[i] == null) players[i] = Player.init(128, 32);
         }
 
@@ -52,23 +52,23 @@ pub fn run(video: *Video) void {
         for (players) |*object, i| {
             if (object.*) |*player| {
                 // Exit
-                if (pad.button_down(.start, i)) return;
+                if (Pad.button_down(.start, i)) return;
 
                 // Bounds
                 if (player.*.x > 640) player.*.x = -64;
                 if (player.*.x + 64 < 0) player.*.x = 640;
-                const speed: f32 = if (pad.button_held(.b, i)) 15 else 10;
+                const speed: f32 = if (Pad.button_held(.b, i)) 15 else 10;
                 
                 // States
                 switch (player.*.state) {
                     .regular => {
                         // Movement
-                        const stick_x = pad.stick_x(i);
+                        const stick_x = Pad.stick_x(i);
                         player.*.x += stick_x * speed;
 
                         // Jumping
                         if (player.*.y + 64 > 480) player.*.velocity = 0;
-                        if (pad.button_down(.a, i)) {
+                        if (Pad.button_down(.a, i)) {
                             const jump = @embedFile("jump.mp3");
                             c.MP3Player_Stop();
                             _ = c.MP3Player_PlayBuffer(jump, jump.len, null);
@@ -78,7 +78,7 @@ pub fn run(video: *Video) void {
                         if (player.*.velocity > -6) player.*.velocity -= 0.25;
 
                         // Dash
-                        if (pad.button_down(.y, i)) {
+                        if (Pad.button_down(.y, i)) {
                             const dash = @embedFile("dash.mp3");
                             c.MP3Player_Stop();
                             _ = c.MP3Player_PlayBuffer(dash, dash.len, null);
