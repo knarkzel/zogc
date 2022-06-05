@@ -5,6 +5,7 @@ const Video = @import("ogc/Video.zig");
 const Texture = @import("ogc/Texture.zig");
 const Console = @import("ogc/Console.zig");
 const game = @import("game.zig");
+const pad = @import("ogc/pad.zig");
 
 var stdout: *anyopaque = undefined;
 pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
@@ -18,5 +19,15 @@ pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
 export fn main(_: c_int, _: [*]const [*:0]const u8) void {
     var video = Video.init();
     Console.init(video.mode, &stdout);
+    pad.init();
+
+    // Music
+    c.ASND_Init();
+    c.MP3Player_Init();
+
+    // Texture
+    var texture = Texture.init();
+    texture.load_tpl("../textures.tpl", 0);
+
     @import("game.zig").run(&video);
 }

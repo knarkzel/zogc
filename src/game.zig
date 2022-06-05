@@ -29,21 +29,9 @@ const Player = struct {
 };
 
 pub fn run(video: *Video) void {
-    // Music
-    c.ASND_Init();
-    c.MP3Player_Init();
-    const sample_mp3 = @embedFile("sample.mp3");
-    _ = c.MP3Player_PlayBuffer(sample_mp3, sample_mp3.len, null);
-
-    // Input
-    pad.init();
-
-    // Texture
-    var texture = Texture.init();
-    texture.load_tpl("../textures.tpl", 0);
-
     // Players
     var players: [4]?Player = .{ null, null, null, null };
+
 
     while (true) {
         // Handle new players
@@ -80,12 +68,20 @@ pub fn run(video: *Video) void {
 
                         // Jumping
                         if (player.*.y + 64 > 480) player.*.velocity = 0;
-                        if (pad.button_down(.a, i)) player.*.velocity = speed;
+                        if (pad.button_down(.a, i)) {
+                            const jump = @embedFile("jump.mp3");
+                            c.MP3Player_Stop();
+                            _ = c.MP3Player_PlayBuffer(jump, jump.len, null);
+                            player.*.velocity = speed;
+                        }
                         player.*.y -= player.*.velocity;
                         if (player.*.velocity > -6) player.*.velocity -= 0.25;
 
                         // Dash
                         if (pad.button_down(.y, i)) {
+                            const dash = @embedFile("dash.mp3");
+                            c.MP3Player_Stop();
+                            _ = c.MP3Player_PlayBuffer(dash, dash.len, null);
                             player.*.velocity = 0;
                             const direction: f32 = if (stick_x > 0) 1 else -1;
                             player.setState(.{ .dash = .{ .time_left = 10, .direction = direction } });
@@ -106,7 +102,5 @@ pub fn run(video: *Video) void {
         }
 
         video.finish();
-
-        if (c.MP3Player_IsPlaying() == 0) _ = c.MP3Player_PlayBuffer(sample_mp3, sample_mp3.len, null);
     }
 }
