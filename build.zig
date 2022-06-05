@@ -7,7 +7,6 @@ const wii_ip = "192.168.11.171";
 const devkitpro = "/opt/devkitpro";
 const dolphin = switch (builtin.target.os.tag) {
     .macos => "/Applications/Dolphin.app/Contents/MacOS/Dolphin",
-    .windows => "Dolphin",
     else => "dolphin-emu",
 };
 

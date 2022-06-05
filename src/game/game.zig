@@ -5,15 +5,14 @@ const Pad = @import("../ogc/Pad.zig");
 const utils = @import("../ogc/utils.zig");
 
 const Player = struct {
-    // zig fmt: off
     const State = union(enum) {
         regular,
         dash: struct {
             time_left: u32,
             direction: f32,
-        }
+        },
     };
-    
+
     x: f32,
     y: f32,
     velocity: f32,
@@ -31,11 +30,10 @@ const Player = struct {
 pub fn run(video: *Video) void {
     // Texture
     var texture = Texture.init();
-    texture.load_tpl("../game/textures/textures.tpl", 0); // Strange path
-    
-    // Players
-    var players: [4]?Player = .{ null, null, null, null };
+    texture.load_tpl("textures/textures.tpl");
 
+    // Players
+    var players: [4]?Player = .{null} ** 4;
 
     while (true) {
         // Handle new players
@@ -62,7 +60,7 @@ pub fn run(video: *Video) void {
                 if (player.*.x > 640) player.*.x = -64;
                 if (player.*.x + 64 < 0) player.*.x = 640;
                 const speed: f32 = if (Pad.button_held(.b, i)) 15 else 10;
-                
+
                 // States
                 switch (player.*.state) {
                     .regular => {

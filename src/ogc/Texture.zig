@@ -8,16 +8,16 @@ pub fn init() Texture {
     return .{ .objects = .{null} ** 8 };
 }
 
-/// Loads TPL from path. `id` decides which texture is loaded.
-pub fn load_tpl(self: *Texture, comptime path: []const u8, id: i32) void {
+/// Loads TPL from path.
+pub fn load_tpl(self: *Texture, comptime path: []const u8) void {
     // Data lives on forever, same as object
     const data = &struct {
-        var bytes = @embedFile(path).*;
+        var bytes = @embedFile("../game/" ++ path).*;
     }.bytes;
     var sprite: c.TPLFile = undefined;
     var object: c.GXTexObj = undefined;
     _ = c.TPL_OpenTPLFromMemory(&sprite, data, data.len);
-    _ = c.TPL_GetTexture(&sprite, id, &object);
+    _ = c.TPL_GetTexture(&sprite, 0, &object);
     self.load_texture(&object);
 }
 
