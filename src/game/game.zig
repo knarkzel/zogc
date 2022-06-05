@@ -61,14 +61,23 @@ pub fn run(video: *Video) void {
                 if (player.*.x + 64 < 0) player.*.x = 640;
                 const speed: f32 = if (Pad.button_held(.b, i)) 15 else 10;
 
+                // Graphics
+                var coords = colors[0]; // Idle animation
+                const points = utils.rectangle(player.x, player.y, 64, 64);
+
                 // States
                 switch (player.*.state) {
                     .regular => {
+                        // Sprites
+                        if (player.*.velocity < 0) coords = colors[2]; // Falling animation
+                        if (player.*.velocity > 0) coords = colors[3]; // Jumping animation
+
                         // Movement
                         const stick_x = Pad.stick_x(i);
                         player.*.x += stick_x * speed;
 
                         // Jumping
+                        if (player.*.velocity > -6) player.*.velocity -= 0.25;
                         if (player.*.y + 64 > 480) player.*.velocity = 0;
                         if (Pad.button_down(.a, i)) {
                             const jump = @embedFile("audio/jump.mp3");
@@ -77,7 +86,6 @@ pub fn run(video: *Video) void {
                             player.*.velocity = speed;
                         }
                         player.*.y -= player.*.velocity;
-                        if (player.*.velocity > -6) player.*.velocity -= 0.25;
 
                         // Dash
                         if (Pad.button_down(.y, i)) {
@@ -90,15 +98,15 @@ pub fn run(video: *Video) void {
                         }
                     },
                     .dash => |*dash| {
+                        // Sprites
+                        coords = colors[1]; // Dash animation
+
+                        // Movement
                         player.*.x += speed * dash.*.direction * 1.5;
                         dash.*.time_left -= 1;
                         if (dash.*.time_left == 0) player.setState(.regular);
                     },
                 }
-
-                // Graphics
-                const points = utils.rectangle(player.x, player.y, 64, 64);
-                const coords = colors[i];
                 utils.texture(points, coords);
             }
         }
