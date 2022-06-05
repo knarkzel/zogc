@@ -1,8 +1,8 @@
-const c = @import("ogc/c.zig");
-const Video = @import("ogc/Video.zig");
-const Texture = @import("ogc/Texture.zig");
-const Pad = @import("ogc/Pad.zig");
-const utils = @import("ogc/utils.zig");
+const c = @import("../ogc/c.zig");
+const Video = @import("../ogc/Video.zig");
+const Texture = @import("../ogc/Texture.zig");
+const Pad = @import("../ogc/Pad.zig");
+const utils = @import("../ogc/utils.zig");
 
 const Player = struct {
     // zig fmt: off
@@ -29,6 +29,10 @@ const Player = struct {
 };
 
 pub fn run(video: *Video) void {
+    // Texture
+    var texture = Texture.init();
+    texture.load_tpl("../game/textures/textures.tpl", 0); // Strange path
+    
     // Players
     var players: [4]?Player = .{ null, null, null, null };
 
@@ -69,7 +73,7 @@ pub fn run(video: *Video) void {
                         // Jumping
                         if (player.*.y + 64 > 480) player.*.velocity = 0;
                         if (Pad.button_down(.a, i)) {
-                            const jump = @embedFile("jump.mp3");
+                            const jump = @embedFile("audio/jump.mp3");
                             c.MP3Player_Stop();
                             _ = c.MP3Player_PlayBuffer(jump, jump.len, null);
                             player.*.velocity = speed;
@@ -79,7 +83,7 @@ pub fn run(video: *Video) void {
 
                         // Dash
                         if (Pad.button_down(.y, i)) {
-                            const dash = @embedFile("dash.mp3");
+                            const dash = @embedFile("audio/dash.mp3");
                             c.MP3Player_Stop();
                             _ = c.MP3Player_PlayBuffer(dash, dash.len, null);
                             player.*.velocity = 0;
