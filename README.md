@@ -13,6 +13,7 @@ zig build
 - To build and run with Dolphin, do `zig build run`
 - To build and deploy to Wii over network (must be in Homebrew menu), do `zig build deploy`
 - To build and debug crash addresses, do `zig build line -- <addresses>`
+- To build and turn png into tpl, do `zig build tpl -- <pngs>`
 
 ## Get Wii IP
 
