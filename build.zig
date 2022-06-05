@@ -11,7 +11,7 @@ const dolphin = switch (builtin.target.os.tag) {
     else => "dolphin-emu",
 };
 
-pub fn build(b: *Builder) void {
+pub fn build(b: *Builder) !void {
     const mode = b.standardReleaseOptions();
     const obj = b.addObject("main", "src/main.zig");
     obj.setOutputDir("build");
@@ -35,14 +35,14 @@ pub fn build(b: *Builder) void {
     dol.step.dependOn(&elf.step);
     elf.step.dependOn(&obj.step);
 
-    const emulator = b.addSystemCommand(&.{ dolphin, "-a", "LLE", "-e", "build/" ++ name ++ ".dol" });
     const run_step = b.step("run", "Run in Dolphin");
+    const emulator = b.addSystemCommand(&.{ dolphin, "-a", "LLE", "-e", "build/" ++ name ++ ".dol" });
     run_step.dependOn(&dol.step);
     run_step.dependOn(&emulator.step);
 
+    const deploy_step = b.step("deploy", "Deploy to Wii");
     const wiiload = b.addSystemCommand(&.{ devkitpro ++ "/tools/bin/wiiload", "build/" ++ name ++ ".dol" });
     wiiload.setEnvironmentVariable("WIILOAD", "tcp:" ++ wii_ip);
-    const deploy_step = b.step("deploy", "Deploy to Wii");
     deploy_step.dependOn(&dol.step);
     deploy_step.dependOn(&wiiload.step);
 
@@ -52,6 +52,17 @@ pub fn build(b: *Builder) void {
         for (args) |arg| {
             const addr2line = b.addSystemCommand(&.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-addr2line", "-e", "build/" ++ name ++ ".elf", arg });
             line_step.dependOn(&addr2line.step);
+        }
+    }
+
+    const conv_step = b.step("tpl", "Converts image into tpl");
+    var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+    const cwd = try std.os.getcwd(&buffer);
+    if (b.args) |args| {
+        for (args) |arg| {
+            const path = b.pathJoin(&.{ cwd, "/", arg });
+            const gxtexconv = b.addSystemCommand(&.{ devkitpro ++ "/tools/bin/gxtexconv", "-i", path });
+            conv_step.dependOn(&gxtexconv.step);
         }
     }
 }
