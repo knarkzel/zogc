@@ -1,8 +1,8 @@
-const c = @import("c.zig");
-const Video = @import("Video.zig");
-const Texture = @import("Texture.zig");
-const pad = @import("pad.zig");
-const utils = @import("utils.zig");
+const c = @import("ogc/c.zig");
+const Video = @import("ogc/Video.zig");
+const Texture = @import("ogc/Texture.zig");
+const pad = @import("ogc/pad.zig");
+const utils = @import("ogc/utils.zig");
 
 const Player = struct {
     // zig fmt: off
@@ -40,7 +40,7 @@ pub fn run(video: *Video) void {
 
     // Texture
     var texture = Texture.init();
-    texture.load_tpl("../assets/textures.tpl", 0);
+    texture.load_tpl("../textures.tpl", 0);
 
     // Players
     var players: [4]?Player = .{ null, null, null, null };

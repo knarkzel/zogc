@@ -1,9 +1,9 @@
-const c = @import("c.zig");
 const std = @import("std");
-const utils = @import("utils.zig");
-const Video = @import("Video.zig");
-const Texture = @import("Texture.zig");
-const Console = @import("Console.zig");
+const c = @import("ogc/c.zig");
+const utils = @import("ogc/utils.zig");
+const Video = @import("ogc/Video.zig");
+const Texture = @import("ogc/Texture.zig");
+const Console = @import("ogc/Console.zig");
 const game = @import("game.zig");
 
 var stdout: *anyopaque = undefined;
