@@ -1,5 +1,7 @@
 const c = @import("c.zig");
 
+pub const Rectangle = [4][2]f32;
+
 pub fn framebuffer(mode: *c.GXRModeObj) *anyopaque {
     return c.MEM_K0_TO_K1(c.SYS_AllocateFramebuffer(mode)) orelse unreachable;
 }
