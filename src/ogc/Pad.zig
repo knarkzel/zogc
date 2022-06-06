@@ -34,6 +34,8 @@ const Button = enum(u32) {
     start = c.PAD_BUTTON_START,
 };
 
+pub const deadzone = 0.1;
+
 pub fn button_up(button: Button, player: usize) bool {
     return (c.PAD_ButtonsUp(@intCast(i32, player)) & @enumToInt(button) != 0);
 }

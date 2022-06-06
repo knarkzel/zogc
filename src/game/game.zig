@@ -84,7 +84,7 @@ pub fn run(video: *Video) void {
 
                         // Movement
                         const stick_x = Pad.stick_x(i);
-                        player.*.x += stick_x * speed;
+                        if (stick_x > Pad.deadzone or stick_x < -Pad.deadzone) player.*.x += stick_x * speed;
 
                         // Jumping
                         if (player.*.velocity > -6) player.*.velocity -= 0.25;
