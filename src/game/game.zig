@@ -27,10 +27,8 @@ const Player = struct {
         self.*.state = state;
     }
 
-    const Direction = enum {
-        left, right  
-    };
-    
+    const Direction = enum { left, right };
+
     const Sprite = enum {
         idle,
         dash,
@@ -89,10 +87,12 @@ pub fn run(video: *Video) void {
                         } else player.drawSprite(.idle);
 
                         // Movement
+                        const deadzone = 0.1;
                         const stick_x = Pad.stick_x(i);
-                        if (stick_x > Pad.deadzone or stick_x < -Pad.deadzone) player.*.x += stick_x * speed;
-
-                        player.*.direction = if (stick_x > 0) .right else .left;
+                        if (stick_x > deadzone or stick_x < -deadzone) {
+                            player.*.x += stick_x * speed;
+                            player.*.direction = if (stick_x > 0) .right else .left;
+                        }
 
                         // Jumping
                         if (player.*.velocity > -6) player.*.velocity -= 0.25;
