@@ -41,9 +41,7 @@ const Player = struct {
             .jump => .{ 0, 1 },
             .fall => .{ 1, 1 },
         };
-        const width = 64;
-        const height = 64;
-        utils.sprite(area, coord, width, height);
+        utils.sprite(area, coord, 64, 64);
     }
 };
 
