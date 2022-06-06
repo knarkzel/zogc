@@ -42,12 +42,12 @@ pub fn texture(points: [4][2]f32, coords: [4][2]f32) void {
     c.GX_End();
 }
 
-// Draw sprite. Assumes texture 0 is 1024x1024
-pub fn sprite(area: [4][2]f32, coord: [2]f32) void {
-    const width = area[1][0] - area[0][0];
-    const height = area[2][1] - area[0][1];
-    const points = rectangle(area[0][0], area[0][1], width, height);
-    const coords = rectangle(coord[0] * 32, coord[1] * 32, 32 / 1024, 32 / 1024);
+// Draw sprite
+pub fn sprite(area: [4][2]f32, coord: [2]f32, width: f32, height: f32) void {
+    const player_width = area[1][0] - area[0][0];
+    const player_height = area[2][1] - area[0][1];
+    const points = rectangle(area[0][0], area[0][1], player_width, player_height);
+    const coords = rectangle(coord[0] / 32, coord[1] / 32, 32 / width, 32 / height);
     texture(points, coords);
 }
 
