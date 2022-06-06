@@ -6,23 +6,25 @@ const Pad = @import("../ogc/Pad.zig");
 
 // Sprites
 const Sprite = enum {
-    idle,
-    dash,
-    jump,
-    fall,
-    sword,
+    player_idle,
+    player_dash,
+    player_jump,
+    player_fall,
+    player_sword,
+    slime_idle,
 
     fn draw(comptime self: Sprite, area: [4][2]f32) void {
         const settings: [4]f32 = switch (self) {
-            //          x  y  w   h
-            .idle => .{ 0, 0, 32, 32 },
-            .dash => .{ 32, 0, 32, 32 },
-            .jump => .{ 0, 32, 32, 32 },
-            .fall => .{ 32, 32, 32, 32 },
-            .sword => .{ 64, 0, 32, 96 },
+            //                 x  y  w   h
+            .player_idle => .{ 0, 0, 32, 32 },
+            .player_dash => .{ 32, 0, 32, 32 },
+            .player_jump => .{ 0, 32, 32, 32 },
+            .player_fall => .{ 32, 32, 32, 32 },
+            .player_sword => .{ 64, 0, 32, 96 },
+            .slime_idle => .{ 128, 0, 32, 32 },
         };
         // Current texture atlas size (textures.png)
-        const size = .{ 96, 96 };
+        const size = .{ 256, 256 };
         utils.sprite(area, settings, size);
     }
 };
@@ -31,12 +33,14 @@ const Sprite = enum {
 const Player = struct {
     x: f32,
     y: f32,
-    velocity: f32,
-    state: State,
-    direction: Direction,
+    width: f32 = 64,
+    height: f32 = 64,
+    velocity: f32 = 0,
+    state: State = .regular,
+    direction: Direction = .right,
 
     fn init(x: f32, y: f32) Player {
-        return Player{ .x = x, .y = y, .velocity = 0, .state = .regular, .direction = .right };
+        return .{ .x = x, .y = y };
     }
 
     const State = union(enum) {
@@ -55,7 +59,27 @@ const Player = struct {
     const Direction = enum { left, right };
 
     fn drawSprite(self: *Player, comptime sprite: Sprite) void {
-        var area = utils.rectangle(self.x, self.y, 64, 64);
+        var area = utils.rectangle(self.x, self.y, self.width, self.height);
+        if (self.direction == .left) utils.mirror(&area);
+        sprite.draw(area);
+    }
+};
+
+const Slime = struct {
+    x: f32,
+    y: f32,
+    width: f32 = 64,
+    height: f32 = 64,
+    direction: Direction = .right,
+
+    fn init(x: f32, y: f32) Slime {
+        return .{ .x = x, .y = y };
+    }
+
+    const Direction = enum { left, right };
+
+    fn drawSprite(self: *Slime, comptime sprite: Sprite) void {
+        var area = utils.rectangle(self.x, self.y, self.width, self.height);
         if (self.direction == .left) utils.mirror(&area);
         sprite.draw(area);
     }
@@ -68,6 +92,9 @@ pub fn run(video: *Video) void {
 
     // Players
     var players: [4]?Player = .{null} ** 4;
+
+    // Slime
+    var slime = Slime.init(200, 200);
 
     while (true) {
         // Handle new players
@@ -97,10 +124,10 @@ pub fn run(video: *Video) void {
                     .regular => {
                         // Sprites
                         if (player.*.velocity < 0) {
-                            player.drawSprite(.fall);
+                            player.drawSprite(.player_fall);
                         } else if (player.*.velocity > 0) {
-                            player.drawSprite(.jump);
-                        } else player.drawSprite(.idle);
+                            player.drawSprite(.player_jump);
+                        } else player.drawSprite(.player_idle);
 
                         // Movement
                         const deadzone = 0.1;
@@ -127,11 +154,11 @@ pub fn run(video: *Video) void {
                     },
                     .dash => |*dash| {
                         // Sprites
-                        player.drawSprite(.dash);
+                        player.drawSprite(.player_dash);
 
                         // Sword
                         var area = utils.rectangle(player.*.x + 32, player.*.y, 32, 96);
-                        Sprite.sword.draw(area);
+                        Sprite.player_sword.draw(area);
 
                         // Movement
                         player.*.x += speed * dash.delta_x * 1.5;
@@ -142,6 +169,9 @@ pub fn run(video: *Video) void {
                 }
             }
         }
+
+        // Slime logic
+        slime.drawSprite(.slime_idle);
 
         video.finish();
     }
