@@ -5,14 +5,6 @@ const Pad = @import("../ogc/Pad.zig");
 const utils = @import("../ogc/utils.zig");
 
 const Player = struct {
-    const State = union(enum) {
-        regular,
-        dash: struct {
-            time_left: u32,
-            direction: f32,
-        },
-    };
-
     x: f32,
     y: f32,
     velocity: f32,
@@ -22,8 +14,34 @@ const Player = struct {
         return Player{ .x = x, .y = y, .velocity = 0, .state = .regular };
     }
 
+    const State = union(enum) {
+        regular,
+        dash: struct {
+            time_left: u32,
+            direction: f32,
+        },
+    };
+
     fn setState(self: *Player, state: State) void {
         self.*.state = state;
+    }
+
+    const Sprite = enum {
+        idle,
+        dash,
+        jump,
+        fall,
+    };
+
+    fn drawSprite(self: *Player, comptime sprite: Sprite) void {
+        const area = utils.rectangle(self.x, self.y, 64, 64);
+        const coord: [2]f32 = switch (sprite) {
+            .idle => .{ 0, 0 },
+            .dash => .{ 1, 0 },
+            .jump => .{ 0, 1 },
+            .fall => .{ 1, 1 },
+        };
+        utils.sprite(area, coord);
     }
 };
 
@@ -44,13 +62,6 @@ pub fn run(video: *Video) void {
         video.start();
 
         // Players logic
-        const colors = [4]utils.Rectangle{
-            utils.rectangle(0, 0, 0.5, 0.5),
-            utils.rectangle(0, 0.5, 0.5, 0.5),
-            utils.rectangle(0.5, 0, 0.5, 0.5),
-            utils.rectangle(0.5, 0.5, 0.5, 0.5),
-        };
-
         for (players) |*object, i| {
             if (object.*) |*player| {
                 // Exit
@@ -61,16 +72,15 @@ pub fn run(video: *Video) void {
                 if (player.*.x + 64 < 0) player.*.x = 640;
                 const speed: f32 = if (Pad.button_held(.b, i)) 15 else 10;
 
-                // Graphics
-                var coords = colors[0]; // Idle animation
-                const points = utils.rectangle(player.x, player.y, 64, 64);
-
                 // States
                 switch (player.*.state) {
                     .regular => {
                         // Sprites
-                        if (player.*.velocity < 0) coords = colors[2]; // Falling animation
-                        if (player.*.velocity > 0) coords = colors[3]; // Jumping animation
+                        if (player.*.velocity < 0) {
+                            player.drawSprite(.fall);
+                        } else if (player.*.velocity > 0) {
+                            player.drawSprite(.jump);
+                        } else player.drawSprite(.idle);
 
                         // Movement
                         const stick_x = Pad.stick_x(i);
@@ -99,7 +109,7 @@ pub fn run(video: *Video) void {
                     },
                     .dash => |*dash| {
                         // Sprites
-                        coords = colors[1]; // Dash animation
+                        player.drawSprite(.dash);
 
                         // Movement
                         player.*.x += speed * dash.*.direction * 1.5;
@@ -107,7 +117,6 @@ pub fn run(video: *Video) void {
                         if (dash.*.time_left == 0) player.setState(.regular);
                     },
                 }
-                utils.texture(points, coords);
             }
         }
 

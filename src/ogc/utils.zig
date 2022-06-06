@@ -43,11 +43,11 @@ pub fn texture(points: [4][2]f32, coords: [4][2]f32) void {
 }
 
 // Draw sprite. Assumes texture 0 is 1024x1024
-pub fn sprite(rectangle: [4][2]f32, sprite: [2]f32) void {
-    const width = rectangle[1][0] - rectangle[0][0];
-    const height = rectangle[2][1] - rectangle[0][1];
-    const points = rectangle(rectangle[0][0], rectangle[0][1], width, height);
-    const coords = rectangle(sprite[0] * 32, sprite[1] * 32, 32 / 1024, 32 / 1024);
+pub fn sprite(area: [4][2]f32, coord: [2]f32) void {
+    const width = area[1][0] - area[0][0];
+    const height = area[2][1] - area[0][1];
+    const points = rectangle(area[0][0], area[0][1], width, height);
+    const coords = rectangle(coord[0] * 32, coord[1] * 32, 32 / 1024, 32 / 1024);
     texture(points, coords);
 }
 
