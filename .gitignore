@@ -1,3 +1,5 @@
 build
 zig-cache
 *.h
+
+src/game/.DS_Store
