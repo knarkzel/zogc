@@ -25,6 +25,7 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) void {
     // Music
     c.ASND_Init();
     c.MP3Player_Init();
-
+    const dash = @embedFile("game/audio/drums.mp3");
+    _ = c.MP3Player_PlayBuffer(dash, dash.len, null);
     @import("game/game.zig").run(&video);
 }

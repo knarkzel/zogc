@@ -19,7 +19,8 @@ const Player = struct {
         regular,
         dash: struct {
             time_left: u32,
-            direction: f32,
+            delta_x: f32,
+            delta_y: f32,
         },
     };
 
@@ -75,6 +76,10 @@ pub fn run(video: *Video) void {
                 if (player.*.x > 640) player.*.x = -64;
                 if (player.*.x + 64 < 0) player.*.x = 640;
                 const speed: f32 = if (Pad.button_held(.b, i)) 15 else 10;
+                if (player.*.y + 64 > 480) {
+                    player.*.velocity = 0;
+                    player.*.y = 480 - 64;
+                }
 
                 // States
                 switch (player.*.state) {
@@ -89,30 +94,24 @@ pub fn run(video: *Video) void {
                         // Movement
                         const deadzone = 0.1;
                         const stick_x = Pad.stick_x(i);
+                        const stick_y = Pad.stick_y(i);
                         if (stick_x > deadzone or stick_x < -deadzone) {
                             player.*.x += stick_x * speed;
                             player.*.direction = if (stick_x > 0) .right else .left;
                         }
 
                         // Jumping
-                        if (player.*.velocity > -6) player.*.velocity -= 0.25;
-                        if (player.*.y + 64 > 480) player.*.velocity = 0;
+                        const gravity: f32 = if (Pad.button_held(.a, i) and player.*.velocity < 0) 0.05 else 0.25;
+                        if (player.*.velocity > -6) player.*.velocity -= gravity;
                         if (Pad.button_down(.a, i)) {
-                            const jump = @embedFile("audio/jump.mp3");
-                            c.MP3Player_Stop();
-                            _ = c.MP3Player_PlayBuffer(jump, jump.len, null);
                             player.*.velocity = speed;
                         }
                         player.*.y -= player.*.velocity;
 
                         // Dash
                         if (Pad.button_down(.y, i)) {
-                            const dash = @embedFile("audio/dash.mp3");
-                            c.MP3Player_Stop();
-                            _ = c.MP3Player_PlayBuffer(dash, dash.len, null);
                             player.*.velocity = 0;
-                            const direction: f32 = if (stick_x > 0) 1 else -1;
-                            player.setState(.{ .dash = .{ .time_left = 10, .direction = direction } });
+                            player.setState(.{ .dash = .{ .time_left = 10, .delta_x = stick_x, .delta_y = -stick_y } });
                         }
                     },
                     .dash => |*dash| {
@@ -120,7 +119,8 @@ pub fn run(video: *Video) void {
                         player.drawSprite(.dash);
 
                         // Movement
-                        player.*.x += speed * dash.*.direction * 1.5;
+                        player.*.x += speed * dash.delta_x * 1.5;
+                        player.*.y += speed * dash.delta_y * 1.5;
                         dash.*.time_left -= 1;
                         if (dash.*.time_left == 0) player.setState(.regular);
                     },
