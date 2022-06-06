@@ -4,21 +4,45 @@ const Texture = @import("../ogc/Texture.zig");
 const Pad = @import("../ogc/Pad.zig");
 const utils = @import("../ogc/utils.zig");
 
+// Sprites
+const Sprite = enum {
+    idle,
+    dash,
+    jump,
+    fall,
+
+    fn draw(comptime self: Sprite, area: [4][2]f32) void {
+        const settings: [4]f32 = switch (self) {
+            //          x  y  w   h
+            .idle => .{ 0, 0, 32, 32 },
+            .dash => .{ 32, 0, 32, 32 },
+            .jump => .{ 0, 32, 32, 32 },
+            .fall => .{ 32, 32, 32, 32 },
+        };
+        // Current texture atlas size (textures.png)
+        const size = .{ 64, 64 };
+        utils.sprite(area, settings, size);
+    }
+};
+
+// Player
 const Player = struct {
     x: f32,
     y: f32,
     velocity: f32,
     state: State,
+    direction: Direction,
 
     fn init(x: f32, y: f32) Player {
-        return Player{ .x = x, .y = y, .velocity = 0, .state = .regular };
+        return Player{ .x = x, .y = y, .velocity = 0, .state = .regular, .direction = .right };
     }
 
     const State = union(enum) {
         regular,
         dash: struct {
             time_left: u32,
-            direction: f32,
+            delta_x: f32,
+            delta_y: f32,
         },
     };
 
@@ -26,22 +50,12 @@ const Player = struct {
         self.*.state = state;
     }
 
-    const Sprite = enum {
-        idle,
-        dash,
-        jump,
-        fall,
-    };
+    const Direction = enum { left, right };
 
     fn drawSprite(self: *Player, comptime sprite: Sprite) void {
-        const area = utils.rectangle(self.x, self.y, 64, 64);
-        const coord: [2]f32 = switch (sprite) {
-            .idle => .{ 0, 0 },
-            .dash => .{ 1, 0 },
-            .jump => .{ 0, 1 },
-            .fall => .{ 1, 1 },
-        };
-        utils.sprite(area, coord, 64, 64);
+        var area = utils.rectangle(self.x, self.y, 64, 64);
+        if (self.direction == .left) utils.mirror(&area);
+        sprite.draw(area);
     }
 };
 
@@ -71,6 +85,10 @@ pub fn run(video: *Video) void {
                 if (player.*.x > 640) player.*.x = -64;
                 if (player.*.x + 64 < 0) player.*.x = 640;
                 const speed: f32 = if (Pad.button_held(.b, i)) 15 else 10;
+                if (player.*.y + 64 > 480) {
+                    player.*.velocity = 0;
+                    player.*.y = 480 - 64;
+                }
 
                 // States
                 switch (player.*.state) {
@@ -83,28 +101,26 @@ pub fn run(video: *Video) void {
                         } else player.drawSprite(.idle);
 
                         // Movement
+                        const deadzone = 0.1;
                         const stick_x = Pad.stick_x(i);
-                        if (stick_x > Pad.deadzone or stick_x < -Pad.deadzone) player.*.x += stick_x * speed;
+                        const stick_y = Pad.stick_y(i);
+                        if (stick_x > deadzone or stick_x < -deadzone) {
+                            player.*.x += stick_x * speed;
+                            player.*.direction = if (stick_x > 0) .right else .left;
+                        }
 
                         // Jumping
-                        if (player.*.velocity > -6) player.*.velocity -= 0.25;
-                        if (player.*.y + 64 > 480) player.*.velocity = 0;
+                        const gravity: f32 = if (Pad.button_held(.a, i) and player.*.velocity < 0) 0.05 else 0.25;
+                        if (player.*.velocity > -6) player.*.velocity -= gravity;
                         if (Pad.button_down(.a, i)) {
-                            const jump = @embedFile("audio/jump.mp3");
-                            c.MP3Player_Stop();
-                            _ = c.MP3Player_PlayBuffer(jump, jump.len, null);
                             player.*.velocity = speed;
                         }
                         player.*.y -= player.*.velocity;
 
                         // Dash
                         if (Pad.button_down(.y, i)) {
-                            const dash = @embedFile("audio/dash.mp3");
-                            c.MP3Player_Stop();
-                            _ = c.MP3Player_PlayBuffer(dash, dash.len, null);
                             player.*.velocity = 0;
-                            const direction: f32 = if (stick_x > 0) 1 else -1;
-                            player.setState(.{ .dash = .{ .time_left = 10, .direction = direction } });
+                            player.setState(.{ .dash = .{ .time_left = 10, .delta_x = stick_x, .delta_y = -stick_y } });
                         }
                     },
                     .dash => |*dash| {
@@ -112,7 +128,8 @@ pub fn run(video: *Video) void {
                         player.drawSprite(.dash);
 
                         // Movement
-                        player.*.x += speed * dash.*.direction * 1.5;
+                        player.*.x += speed * dash.delta_x * 1.5;
+                        player.*.y += speed * dash.delta_y * 1.5;
                         dash.*.time_left -= 1;
                         if (dash.*.time_left == 0) player.setState(.regular);
                     },
