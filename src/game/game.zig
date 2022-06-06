@@ -43,7 +43,7 @@ const Player = struct {
     fn init(x: f32, y: f32) Player {
         return .{ .x = x, .y = y };
     }
-    
+
     const State = union(enum) {
         regular,
         dash: struct {
@@ -71,6 +71,7 @@ const Slime = struct {
     y: f32,
     width: f32 = 64,
     height: f32 = 64,
+    velocity: f32 = 0,
     direction: Direction = .right,
 
     fn init(x: f32, y: f32) Slime {
@@ -132,7 +133,7 @@ pub fn run(video: *Video) void {
                         } else {
                             if (player.*.grounded) {
                                 // Draw sword properly
-                                const offset_x : f32 = if (player.*.direction == .left) - 32 else 0;
+                                const offset_x: f32 = if (player.*.direction == .left) -32 else 0;
                                 var area = utils.rectangle(player.*.x - offset_x, player.*.y - 74, 32, 96);
                                 if (player.*.direction == .right) utils.mirror(&area);
                                 Sprite.player_sword.draw(area);
@@ -179,6 +180,15 @@ pub fn run(video: *Video) void {
 
         // Slime logic
         slime.drawSprite(.slime_idle);
+        if (slime.y + slime.height > 480) {
+            slime.velocity = 0;
+            slime.y = 480 - slime.height;
+        }
+        if (slime.velocity > -6) slime.velocity -= 0.25;
+        slime.y -= slime.velocity;
+        if (slime.direction == .right) slime.x += 1 else slime.x -= 1;
+        if (slime.x + slime.width > 640) slime.direction = .left;
+        if (slime.x < 0) slime.direction = .right;
 
         video.finish();
     }
