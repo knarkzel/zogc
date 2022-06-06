@@ -34,7 +34,7 @@
         <key>dataFormat</key>
         <string>spritesheet-only</string>
         <key>textureFileName</key>
-        <filename></filename>
+        <filename>atlas.png</filename>
         <key>flipPVR</key>
         <false/>
         <key>pvrQualityLevel</key>
@@ -168,6 +168,7 @@
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
             <key type="filename">block.png</key>
+            <key type="filename">slime.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -218,6 +219,7 @@
             <filename>textures.png</filename>
             <filename>block.png</filename>
             <filename>sword.png</filename>
+            <filename>slime.png</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>
