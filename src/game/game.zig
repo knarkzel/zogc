@@ -9,9 +9,10 @@ const Player = struct {
     y: f32,
     velocity: f32,
     state: State,
+    direction: Direction,
 
     fn init(x: f32, y: f32) Player {
-        return Player{ .x = x, .y = y, .velocity = 0, .state = .regular };
+        return Player{ .x = x, .y = y, .velocity = 0, .state = .regular, .direction = .right };
     }
 
     const State = union(enum) {
@@ -26,6 +27,10 @@ const Player = struct {
         self.*.state = state;
     }
 
+    const Direction = enum {
+        left, right  
+    };
+    
     const Sprite = enum {
         idle,
         dash,
@@ -34,7 +39,8 @@ const Player = struct {
     };
 
     fn drawSprite(self: *Player, comptime sprite: Sprite) void {
-        const area = utils.rectangle(self.x, self.y, 64, 64);
+        var area = utils.rectangle(self.x, self.y, 64, 64);
+        if (self.direction == .left) utils.mirror(&area);
         const coord: [2]f32 = switch (sprite) {
             .idle => .{ 0, 0 },
             .dash => .{ 1, 0 },
@@ -85,6 +91,8 @@ pub fn run(video: *Video) void {
                         // Movement
                         const stick_x = Pad.stick_x(i);
                         player.*.x += stick_x * speed;
+
+                        player.*.direction = if (stick_x > 0) .right else .left;
 
                         // Jumping
                         if (player.*.velocity > -6) player.*.velocity -= 0.25;

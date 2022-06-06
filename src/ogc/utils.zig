@@ -53,6 +53,22 @@ pub fn rectangle(x: f32, y: f32, width: f32, height: f32) [4][2]f32 {
     return .{ .{ x, y }, .{ x + width, y }, .{ x + width, y + height }, .{ x, y + height } };
 }
 
+pub fn mirror(area: *[4][2]f32) void {
+    var temporary = area[0];
+    area[0] = area[1];
+    area[1] = temporary;
+    temporary = area[2];
+    area[2] = area[3];
+    area[3] = temporary;
+}
+
+pub fn rotate(area: *[4][2]f32, angle: f32) void {
+    for (area) |*point| {
+        point.*[0] = @cos(angle) * point[0] - @sin(angle) * point[1];
+        point.*[1] = @sin(angle) * point[0] + @cos(angle) * point[1];
+    }
+}
+
 // Loads appropiate settings for shapes
 pub fn load_shapes() void {
     c.GX_InvVtxCache();
