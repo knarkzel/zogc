@@ -32,11 +32,12 @@ const Player = struct {
     x: f32,
     y: f32,
     velocity: f32,
+    grounded: bool,
     state: State,
     direction: Direction,
 
     fn init(x: f32, y: f32) Player {
-        return Player{ .x = x, .y = y, .velocity = 0, .state = .regular, .direction = .right };
+        return Player{ .x = x, .y = y, .velocity = 0, .grounded = false, .state = .regular, .direction = .right };
     }
 
     const State = union(enum) {
@@ -89,8 +90,9 @@ pub fn run(video: *Video) void {
                 const speed: f32 = if (Pad.button_held(.b, i)) 15 else 10;
                 if (player.*.y + 64 > 480) {
                     player.*.velocity = 0;
+                    player.*.grounded = true;
                     player.*.y = 480 - 64;
-                }
+                } else player.*.grounded = false;
 
                 // States
                 switch (player.*.state) {
@@ -100,7 +102,16 @@ pub fn run(video: *Video) void {
                             player.drawSprite(.fall);
                         } else if (player.*.velocity > 0) {
                             player.drawSprite(.jump);
-                        } else player.drawSprite(.idle);
+                        } else {
+                            if (player.*.grounded) {
+                                // Draw sword properly
+                                const offset_x : f32 = if (player.*.direction == .left) - 32 else 0;
+                                var area = utils.rectangle(player.*.x - offset_x, player.*.y - 74, 32, 96);
+                                if (player.*.direction == .right) utils.mirror(&area);
+                                Sprite.sword.draw(area);
+                            }
+                            player.drawSprite(.idle );
+                        }
 
                         // Movement
                         const deadzone = 0.1;
@@ -130,8 +141,8 @@ pub fn run(video: *Video) void {
                         player.drawSprite(.dash);
 
                         // Sword
-                        var area = utils.rectangle(player.*.x + 32, player.*.y, 32, 96);
-                        Sprite.sword.draw(area);
+                        //var area = utils.rectangle(player.*.x + 32, player.*.y, 32, 96);
+                        //Sprite.sword.draw(area);
 
                         // Movement
                         player.*.x += speed * dash.delta_x * 1.5;
