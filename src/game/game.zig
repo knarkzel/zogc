@@ -4,6 +4,28 @@ const Texture = @import("../ogc/Texture.zig");
 const Pad = @import("../ogc/Pad.zig");
 const utils = @import("../ogc/utils.zig");
 
+// Sprites
+const Sprite = enum {
+    idle,
+    dash,
+    jump,
+    fall,
+
+    fn draw(comptime self: Sprite, area: [4][2]f32) void {
+        const settings: [4]f32 = switch (self) {
+            //          x  y  w   h
+            .idle => .{ 0, 0, 32, 32 },
+            .dash => .{ 32, 0, 32, 32 },
+            .jump => .{ 0, 32, 32, 32 },
+            .fall => .{ 32, 32, 32, 32 },
+        };
+        // Current texture atlas size (textures.png)
+        const size = .{ 64, 64 };
+        utils.sprite(area, settings, size);
+    }
+};
+
+// Player
 const Player = struct {
     x: f32,
     y: f32,
@@ -30,23 +52,10 @@ const Player = struct {
 
     const Direction = enum { left, right };
 
-    const Sprite = enum {
-        idle,
-        dash,
-        jump,
-        fall,
-    };
-
     fn drawSprite(self: *Player, comptime sprite: Sprite) void {
         var area = utils.rectangle(self.x, self.y, 64, 64);
         if (self.direction == .left) utils.mirror(&area);
-        const coord: [2]f32 = switch (sprite) {
-            .idle => .{ 0, 0 },
-            .dash => .{ 1, 0 },
-            .jump => .{ 0, 1 },
-            .fall => .{ 1, 1 },
-        };
-        utils.sprite(area, coord, 64, 64);
+        sprite.draw(area);
     }
 };
 

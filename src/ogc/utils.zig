@@ -30,7 +30,7 @@ pub fn square(points: [4][2]f32, color: [3]f32) void {
     c.GX_End();
 }
 
-// Draw texture from points and texture coordinates
+// Draw texture from points and texture coordinates using texture_id
 pub fn texture(points: [4][2]f32, coords: [4][2]f32) void {
     c.GX_Begin(c.GX_QUADS, c.GX_VTXFMT0, 4);
     var i: u8 = 0;
@@ -42,11 +42,12 @@ pub fn texture(points: [4][2]f32, coords: [4][2]f32) void {
     c.GX_End();
 }
 
-// Draw sprite
-pub fn sprite(area: [4][2]f32, coord: [2]f32, width: f32, height: f32) void {
-    const points = rectangle(area[0][0], area[0][1], area[1][0] - area[0][0], area[2][1] - area[0][1]);
-    const coords = rectangle(coord[0] / (width / 32), coord[1] / (height / 32), 32 / width, 32 / height);
-    texture(points, coords);
+/// Draw sprite.
+/// Settings is an array of following: [x, y, width, height]
+/// Size is an array of following: [texture_width, texture_height]
+pub fn sprite(area: [4][2]f32, settings: [4]f32, size: [2]f32) void {
+    const coords = rectangle(settings[0] / size[0], settings[1] / size[1], settings[2] / size[0], settings[3] / size[1]);
+    texture(area, coords);
 }
 
 pub fn rectangle(x: f32, y: f32, width: f32, height: f32) [4][2]f32 {
