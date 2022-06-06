@@ -10,6 +10,7 @@ const Sprite = enum {
     dash,
     jump,
     fall,
+    sword,
 
     fn draw(comptime self: Sprite, area: [4][2]f32) void {
         const settings: [4]f32 = switch (self) {
@@ -18,9 +19,10 @@ const Sprite = enum {
             .dash => .{ 32, 0, 32, 32 },
             .jump => .{ 0, 32, 32, 32 },
             .fall => .{ 32, 32, 32, 32 },
+            .sword => .{ 64, 0, 32, 96 },
         };
         // Current texture atlas size (textures.png)
-        const size = .{ 64, 64 };
+        const size = .{ 96, 96 };
         utils.sprite(area, settings, size);
     }
 };
@@ -62,7 +64,7 @@ const Player = struct {
 pub fn run(video: *Video) void {
     // Texture
     var texture = Texture.init();
-    texture.load_tpl("textures/textures.tpl");
+    texture.load_tpl("textures/atlas.tpl");
 
     // Players
     var players: [4]?Player = .{null} ** 4;
@@ -126,6 +128,10 @@ pub fn run(video: *Video) void {
                     .dash => |*dash| {
                         // Sprites
                         player.drawSprite(.dash);
+
+                        // Sword
+                        var area = utils.rectangle(player.*.x + 32, player.*.y, 32, 96);
+                        Sprite.sword.draw(area);
 
                         // Movement
                         player.*.x += speed * dash.delta_x * 1.5;
