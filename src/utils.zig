@@ -1,7 +1,5 @@
 const c = @import("c.zig");
 
-pub const Rectangle = [4][2]f32;
-
 pub fn framebuffer(mode: *c.GXRModeObj) *anyopaque {
     return c.MEM_K0_TO_K1(c.SYS_AllocateFramebuffer(mode)) orelse unreachable;
 }
@@ -50,6 +48,7 @@ pub fn sprite(area: [4][2]f32, settings: [4]f32, size: [2]f32) void {
     texture(area, coords);
 }
 
+// Rectangle
 pub fn rectangle(x: f32, y: f32, width: f32, height: f32) [4][2]f32 {
     return .{ .{ x, y }, .{ x + width, y }, .{ x + width, y + height }, .{ x, y + height } };
 }
@@ -68,28 +67,4 @@ pub fn rotate(area: *[4][2]f32, angle: f32) void {
         point.*[0] = @cos(angle) * point[0] - @sin(angle) * point[1];
         point.*[1] = @sin(angle) * point[0] + @cos(angle) * point[1];
     }
-}
-
-// Loads appropiate settings for shapes
-pub fn load_shapes() void {
-    c.GX_InvVtxCache();
-    c.GX_ClearVtxDesc();
-
-    // c.GX_SetVtxDesc(c.GX_VA_TEX0, c.GX_NONE);
-    c.GX_SetVtxDesc(c.GX_VA_POS, c.GX_DIRECT);
-    c.GX_SetVtxDesc(c.GX_VA_CLR0, c.GX_DIRECT);
-
-    // setup the vertex attribute table
-    // describes the data
-    // args: vat location 0-7, type of data, data format, size, scale
-    // so for ex. in the first call we are sending position data with
-    // 3 values X,Y,Z of size F32. scale sets the number of fractional
-    // bits for non float data.
-    c.GX_SetVtxAttrFmt(c.GX_VTXFMT0, c.GX_VA_POS, c.GX_POS_XY, c.GX_F32, 0);
-    c.GX_SetVtxAttrFmt(c.GX_VTXFMT0, c.GX_VA_CLR0, c.GX_CLR_RGBA, c.GX_RGB8, 0);
-
-    c.GX_SetNumChans(1);
-    c.GX_SetNumTexGens(0);
-    c.GX_SetTevOrder(c.GX_TEVSTAGE0, c.GX_TEXCOORDNULL, c.GX_TEXMAP_NULL, c.GX_COLOR0A0);
-    c.GX_SetTevOp(c.GX_TEVSTAGE0, c.GX_PASSCLR);
 }

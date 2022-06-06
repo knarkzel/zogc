@@ -1,5 +1,5 @@
-const c = @import("c.zig");
-const utils = @import("utils.zig");
+const c = @import("../c.zig");
+const utils = @import("../utils.zig");
 
 pub fn init(mode: *c.GXRModeObj, stdout: **anyopaque) void {
     const framebuffer = utils.framebuffer(mode);

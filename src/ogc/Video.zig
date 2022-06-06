@@ -1,5 +1,5 @@
-const c = @import("c.zig");
-const utils = @import("utils.zig");
+const c = @import("../c.zig");
+const utils = @import("../utils.zig");
 
 const Video = @This();
 mode: *c.GXRModeObj,

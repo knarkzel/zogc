@@ -1,8 +1,8 @@
-const c = @import("../ogc/c.zig");
+const c = @import("../c.zig");
+const utils = @import("../utils.zig");
 const Video = @import("../ogc/Video.zig");
-const Texture = @import("../ogc/Texture.zig");
+const Gpu = @import("../ogc/Gpu.zig");
 const Pad = @import("../ogc/Pad.zig");
-const utils = @import("../ogc/utils.zig");
 
 // Sprites
 const Sprite = enum {
@@ -63,7 +63,7 @@ const Player = struct {
 
 pub fn run(video: *Video) void {
     // Texture
-    var texture = Texture.init();
+    var texture = Gpu.init();
     texture.load_tpl("textures/atlas.tpl");
 
     // Players

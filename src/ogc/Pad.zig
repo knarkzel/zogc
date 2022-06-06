@@ -1,5 +1,5 @@
 const std = @import("std");
-const c = @import("c.zig");
+const c = @import("../c.zig");
 const shl = std.math.shl;
 
 pub fn init() void {
