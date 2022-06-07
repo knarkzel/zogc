@@ -66,10 +66,15 @@ pub fn mirror(area: *[4][2]f32) void {
 
 // Rotates area around center by angle (degrees)
 pub fn rotate(area: *[4][2]f32, angle: f32) void {
-    const radians = angle * std.math.pi / 180;
     const width = area[1][0] - area[0][0];
     const height = area[2][1] - area[0][1];
     const origo = .{ area[0][0] + width / 2, area[0][1] + height / 2 };
+    rotate_point(area, origo, angle);
+}
+
+// Rotates area around point by angle (degrees)
+pub fn rotate_point(area: *[4][2]f32, origo: [2]f32, angle: f32) void {
+    const radians = angle * std.math.pi / 180;
     for (area) |*point| {
         const x = point[0] - origo[0];
         const y = point[1] - origo[1];
