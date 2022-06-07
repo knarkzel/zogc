@@ -20,6 +20,7 @@ width: f32 = 64,
 height: f32 = 64,
 state: State = .regular,
 direction: Direction = .right,
+health: f32 = 3,
 
 pub fn init(x: f32, y: f32, port: usize) Player {
     return .{ .x = x, .y = y, .port = port };
@@ -165,6 +166,14 @@ pub fn run(self: *Player, state: *game.State) void {
             } else self.*.y = block.y + block.height;
             self.*.y_speed = 0;
         }
+    }
+
+    // Draw health
+    var hp = self.*.health;
+    while (hp > 0) : (hp -= 1) {
+        var offset_x = (self.*.x - 48) + (hp * 32);
+        var area = utils.rectangle(offset_x, self.y - 32, 32, 32);
+        game.Sprite.heart.draw(area);
     }
 
     // Apply speed
