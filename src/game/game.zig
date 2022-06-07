@@ -180,7 +180,36 @@ pub fn run(video: *Video) void {
                         if (Pad.button_down(.a, i)) {
                             player.*.velocity = speed;
                         }
+
                         player.*.y -= player.*.velocity;
+
+                        // Collision check?
+                        for (blocks) | block | {
+
+                        var x1: f32 = player.x;
+                        var x2: f32 = block.x;
+                        var y1: f32 = player.y;
+                        var y2: f32 = block.y;
+                        var w1: f32 = player.width;
+                        var w2: f32 = block.width;
+                        var h1: f32 = player.height;
+                        var h2: f32 = block.height;
+
+                        // Colliding?
+                        if (x1 < x2 + w2 and 
+                            x1 + w1 > x2 and
+                            y1 < y2 + h2 and
+                            y1 + h1 > y2) {
+                            
+                            // player.*.x = 100;
+                            // player.*.y = 400; 
+                            player.*.y += player.velocity;
+                            player.*.velocity = 0; 
+                            player.*.grounded = true;
+                        }
+                        }
+
+                        // player.*.y -= player.*.velocity;
 
                         // Dash
                         if (Pad.button_down(.y, i)) {
