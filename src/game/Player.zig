@@ -87,7 +87,11 @@ pub fn run(self: *Player, state: *game.State) void {
             self.*.x_speed = speed * dash.delta_x * 1.5;
             self.*.y_speed = speed * dash.delta_y * 1.5;
             dash.*.time_left -= 1;
-            if (dash.*.time_left == 0) self.setState(.regular);
+            if (dash.*.time_left == 0) {
+                self.*.x_speed = 0;
+                self.*.y_speed = 0;
+                self.setState(.regular);
+            }
         },
     }
 
@@ -105,7 +109,7 @@ pub fn run(self: *Player, state: *game.State) void {
         // Vertical
         if (utils.collides(block_area, utils.rectangle(self.x, self.y - self.y_speed, self.width, self.height))) {
             if (self.y_speed < 0) {
-                self.*.grounded = true;
+                if (self.state == .regular) self.*.grounded = true;
                 self.*.y = block.y - self.height;
             } else self.*.y = block.y + block.height;
             self.*.y_speed = 0;
