@@ -14,6 +14,7 @@ height: f32 = 64,
 grounded: bool = false,
 state: State = .regular,
 direction: Direction = .right,
+health: f32 = 3,
 
 pub fn init(x: f32, y: f32, port: usize) Player {
     return .{ .x = x, .y = y, .port = port };
@@ -122,6 +123,15 @@ pub fn run(self: *Player, state: *game.State) void {
         var area = utils.rectangle(self.*.x - offset_x, self.*.y - 74, 32, 96);
         if (self.*.direction == .right) utils.mirror(&area);
         game.Sprite.player_sword.draw(area);
+    }
+
+    // Draw health
+    var hp: f32 = self.*.health;
+
+    while (hp > 0): (hp -= 1) {
+        var offset_x: f32 = (self.*.x - 48) + (hp * 32);
+        var area = utils.rectangle(offset_x, self.y - 32, 32, 32);
+        game.Sprite.heart.draw(area);
     }
 
     // Apply speed
