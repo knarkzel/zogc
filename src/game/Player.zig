@@ -4,10 +4,15 @@ const Pad = @import("../ogc/Pad.zig");
 const game = @import("game.zig");
 const utils = @import("../utils.zig");
 
+const jumps_max: u8 = 2;
+const dashes_max: u8 = 1;
+
 x: f32,
 y: f32,
 x_speed: f32 = 0,
 y_speed: f32 = 0,
+jumps: u8 = jumps_max,
+dashes: u8 = dashes_max,
 port: usize,
 width: f32 = 64,
 height: f32 = 64,
@@ -48,7 +53,7 @@ pub fn run(self: *Player, state: *game.State) void {
     // Bounds
     if (self.*.x > 640) self.*.x = -64;
     if (self.*.x + 64 < 0) self.*.x = 640;
-    const speed: f32 = if (Pad.button_held(.b, self.port)) 15 else 10;
+    const speed: f32 = 10;
 
     // States
     switch (self.*.state) {
@@ -70,13 +75,17 @@ pub fn run(self: *Player, state: *game.State) void {
             } else self.*.x_speed = 0;
 
             // Jumping
-            const gravity: f32 = if (Pad.button_held(.a, self.port) and self.*.y_speed < 0) 0.01 else 0.25;
+            const gravity: f32 = if (Pad.button_held(.y, self.port) and self.*.y_speed < 0) 0.01 else 0.25;
             if (self.*.y_speed > -6) self.*.y_speed -= gravity;
-            if (Pad.button_down(.a, self.port)) self.*.y_speed = speed;
+            if (Pad.button_down(.y, self.port) and self.jumps > 0) {
+                self.*.y_speed = speed;
+                self.jumps -= 1;
+            }
 
             // Dash
-            if (Pad.button_down(.y, self.port)) {
+            if (Pad.button_down(.x, self.port) and self.dashes > 0) {
                 self.*.y_speed = 0;
+                self.dashes -= 1;
                 self.setState(.{ .dash = .{ .time_left = 10, .delta_x = stick_x, .delta_y = stick_y } });
             }
         },
@@ -111,6 +120,8 @@ pub fn run(self: *Player, state: *game.State) void {
         if (utils.collides(block_area, utils.rectangle(self.x, self.y - self.y_speed, self.width, self.height))) {
             if (self.y_speed < 0) {
                 if (self.state == .regular) self.*.grounded = true;
+                self.jumps = jumps_max;
+                self.dashes = dashes_max;
                 self.*.y = block.y - self.height;
             } else self.*.y = block.y + block.height;
             self.*.y_speed = 0;
