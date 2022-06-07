@@ -77,3 +77,7 @@ pub fn rotate(area: *[4][2]f32, angle: f32) void {
         point[1] = @sin(radians) * x + @cos(radians) * y + origo[1];
     }
 }
+
+pub fn collides(rx: [4][2]f32, ry: [4][2]f32) bool {
+    return (rx[0][0] < ry[1][0] and rx[1][0] > ry[0][0] and rx[0][1] < ry[2][1] and rx[2][1] > ry[0][1]);
+}

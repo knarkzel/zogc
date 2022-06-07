@@ -37,7 +37,7 @@ pub const Sprite = enum {
 // Global state
 pub const State = struct {
     players: [4]?Player = .{null} ** 4,
-    blocks: [20]Block = undefined,
+    blocks: [10]Block = undefined,
     slime: Slime,
 };
 
@@ -50,7 +50,7 @@ pub fn run(video: *Video) void {
     var state = State{
         .slime = Slime.init(200, 200),
     };
-    for (state.blocks) |*block, i| block.* = Block.init(0 + (@intToFloat(f32, i) * 32), 200);
+    for (state.blocks) |*block, i| block.* = Block.init(150 + (@intToFloat(f32, i) * 32), 200);
 
     while (true) {
         // Handle new players
