@@ -36,6 +36,7 @@ const Player = struct {
     width: f32 = 64,
     height: f32 = 64,
     velocity: f32 = 0,
+    angle: f32 = 0,
     grounded: bool = false,
     state: State = .regular,
     direction: Direction = .right,
@@ -62,6 +63,9 @@ const Player = struct {
     fn drawSprite(self: *Player, comptime sprite: Sprite) void {
         var area = utils.rectangle(self.x, self.y, self.width, self.height);
         if (self.direction == .left) utils.mirror(&area);
+        self.angle += 1;
+        if (self.angle > 360) self.angle = 0;
+        utils.rotate(&area, self.angle);
         sprite.draw(area);
     }
 };

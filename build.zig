@@ -13,6 +13,7 @@ const dolphin = switch (builtin.target.os.tag) {
 pub fn build(b: *Builder) !void {
     const mode = b.standardReleaseOptions();
     const obj = b.addObject("main", "src/main.zig");
+    // obj.emit_docs = .emit;
     obj.setOutputDir("build");
     obj.linkLibC();
     obj.setLibCFile(std.build.FileSource{ .path = "libc.txt" });

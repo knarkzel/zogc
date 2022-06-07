@@ -1,3 +1,4 @@
+const std = @import("std");
 const c = @import("c.zig");
 
 pub fn framebuffer(mode: *c.GXRModeObj) *anyopaque {
@@ -53,6 +54,7 @@ pub fn rectangle(x: f32, y: f32, width: f32, height: f32) [4][2]f32 {
     return .{ .{ x, y }, .{ x + width, y }, .{ x + width, y + height }, .{ x, y + height } };
 }
 
+// Mirrors area
 pub fn mirror(area: *[4][2]f32) void {
     var temporary = area[0];
     area[0] = area[1];
@@ -62,9 +64,16 @@ pub fn mirror(area: *[4][2]f32) void {
     area[3] = temporary;
 }
 
+// Rotates area around center by angle (degrees)
 pub fn rotate(area: *[4][2]f32, angle: f32) void {
+    const radians = angle * std.math.pi / 180;
+    const width = area[1][0] - area[0][0];
+    const height = area[2][1] - area[0][1];
+    const origo = .{ area[0][0] + width / 2, area[0][1] + height / 2 };
     for (area) |*point| {
-        point.*[0] = @cos(angle) * point[0] - @sin(angle) * point[1];
-        point.*[1] = @sin(angle) * point[0] + @cos(angle) * point[1];
+        const x = point[0] - origo[0];
+        const y = point[1] - origo[1];
+        point[0] = @cos(radians) * x - @sin(radians) * y + origo[0];
+        point[1] = @sin(radians) * x + @cos(radians) * y + origo[1];
     }
 }
