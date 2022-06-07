@@ -12,6 +12,7 @@ const Sprite = enum {
     player_fall,
     player_sword,
     slime_idle,
+    block,
 
     fn draw(comptime self: Sprite, area: [4][2]f32) void {
         const settings: [4]f32 = switch (self) {
@@ -22,6 +23,7 @@ const Sprite = enum {
             .player_fall => .{ 32, 32, 32, 32 },
             .player_sword => .{ 64, 0, 32, 96 },
             .slime_idle => .{ 128, 0, 32, 32 },
+            .block => .{ 128, 96, 32, 32 },
         };
         // Current texture atlas size (textures.png)
         const size = .{ 256, 256 };
@@ -91,6 +93,22 @@ const Slime = struct {
     }
 };
 
+const Block = struct {
+    x: f32,
+    y: f32,
+    width: f32 = 32,
+    height: f32 = 32,
+
+    fn init(x: f32, y: f32) Block {
+        return .{ .x = x, .y = y };
+    }
+
+    fn drawSprite(self: *Block, comptime sprite: Sprite) void {
+        var area = utils.rectangle(self.x, self.y, self.width, self.height);
+        sprite.draw(area);
+    }
+};
+
 pub fn run(video: *Video) void {
     // Texture
     var texture = Gpu.init();
@@ -101,6 +119,12 @@ pub fn run(video: *Video) void {
 
     // Slime
     var slime = Slime.init(200, 200);
+
+    // Blocks
+    var blocks: [20]Block = undefined;
+    for (blocks) | *block, i | {
+        block.* = Block.init(0 + (@intToFloat(f32, i) * 32), 200);
+    } 
 
     while (true) {
         // Handle new players
@@ -160,7 +184,36 @@ pub fn run(video: *Video) void {
                         if (Pad.button_down(.a, i)) {
                             player.*.velocity = speed;
                         }
+
                         player.*.y -= player.*.velocity;
+
+                        // Collision check?
+                        for (blocks) | block | {
+
+                        var x1: f32 = player.x;
+                        var x2: f32 = block.x;
+                        var y1: f32 = player.y;
+                        var y2: f32 = block.y;
+                        var w1: f32 = player.width;
+                        var w2: f32 = block.width;
+                        var h1: f32 = player.height;
+                        var h2: f32 = block.height;
+
+                        // Colliding?
+                        if (x1 < x2 + w2 and 
+                            x1 + w1 > x2 and
+                            y1 < y2 + h2 and
+                            y1 + h1 > y2) {
+                            
+                            // player.*.x = 100;
+                            // player.*.y = 400; 
+                            player.*.y += player.velocity;
+                            player.*.velocity = 0; 
+                            player.*.grounded = true;
+                        }
+                        }
+
+                        // player.*.y -= player.*.velocity;
 
                         // Dash
                         if (Pad.button_down(.y, i)) {
@@ -194,6 +247,9 @@ pub fn run(video: *Video) void {
         if (slime.x + slime.width > 640) slime.direction = .left;
         if (slime.x < 0) slime.direction = .right;
 
+        // Block logic
+        for (blocks) | *block | block.drawSprite(.block);
+        
         video.finish();
     }
 }
