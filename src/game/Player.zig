@@ -6,17 +6,18 @@ const utils = @import("../utils.zig");
 
 const jumps_max: u8 = 2;
 const dashes_max: u8 = 1;
+const attack_time: u8 = 20;
 
 x: f32,
 y: f32,
+port: usize,
 x_speed: f32 = 0,
 y_speed: f32 = 0,
 jumps: u8 = jumps_max,
 dashes: u8 = dashes_max,
-port: usize,
+grounded: bool = false,
 width: f32 = 64,
 height: f32 = 64,
-grounded: bool = false,
 state: State = .regular,
 direction: Direction = .right,
 
@@ -27,9 +28,12 @@ pub fn init(x: f32, y: f32, port: usize) Player {
 const State = union(enum) {
     regular,
     dash: struct {
-        time_left: u32,
+        time_left: u8 = 10,
         delta_x: f32,
         delta_y: f32,
+    },
+    attack: struct {
+        time_left: u8,
     },
 };
 
@@ -45,6 +49,11 @@ pub fn drawSprite(self: *Player, comptime sprite: game.Sprite) void {
     sprite.draw(area);
 }
 
+fn sword_area(self: *Player) [4][2]f32 {
+    const offset: [2]f32 = if (self.*.direction == .left) .{ -3, 90 } else .{ -29, 90 };
+    return utils.rectangle(self.*.x - offset[0], self.*.y - offset[1], 32, 96);
+}
+
 pub fn run(self: *Player, state: *game.State) void {
     // Exit
     if (Pad.button_down(.start, self.port)) std.os.exit(0);
@@ -57,13 +66,6 @@ pub fn run(self: *Player, state: *game.State) void {
     // States
     switch (self.*.state) {
         .regular => {
-            // Sprites
-            if (self.*.y_speed < 0) {
-                self.drawSprite(.player_fall);
-            } else if (self.*.y_speed > 0) {
-                self.drawSprite(.player_jump);
-            } else self.drawSprite(.player_idle);
-
             // Movement
             const deadzone = 0.1;
             const stick_x = Pad.stick_x(self.port);
@@ -85,13 +87,27 @@ pub fn run(self: *Player, state: *game.State) void {
             if (Pad.button_down(.x, self.port) and self.dashes > 0) {
                 self.*.y_speed = 0;
                 self.dashes -= 1;
-                self.setState(.{ .dash = .{ .time_left = 10, .delta_x = stick_x, .delta_y = stick_y } });
+                self.*.state = .{ .dash = .{ .delta_x = stick_x, .delta_y = stick_y } };
             }
+
+            // Attack
+            if (Pad.button_down(.a, self.port)) self.*.state = .{ .attack = .{ .time_left = attack_time } };
+
+            // Draw regular sword
+            if (self.*.grounded) {
+                var area = self.sword_area();
+                if (self.*.direction == .right) utils.mirror(&area);
+                game.Sprite.player_sword.draw(area);
+            }
+
+            // Sprites
+            if (self.*.y_speed < 0) {
+                self.drawSprite(.player_fall);
+            } else if (self.*.y_speed > 0) {
+                self.drawSprite(.player_jump);
+            } else self.drawSprite(.player_idle);
         },
         .dash => |*dash| {
-            // Sprites
-            self.drawSprite(.player_dash);
-
             // Movement
             self.*.x_speed = speed * dash.delta_x * 1.5;
             self.*.y_speed = speed * dash.delta_y * 1.5;
@@ -99,8 +115,32 @@ pub fn run(self: *Player, state: *game.State) void {
             if (dash.*.time_left == 0) {
                 self.*.x_speed = 0;
                 self.*.y_speed = 0;
-                self.setState(.regular);
+                self.*.state = .regular;
             }
+
+            // Sprites
+            self.drawSprite(.player_dash);
+        },
+        .attack => |*attack| {
+            var angle: f32 = 90 - 90 * (@intToFloat(f32, attack.*.time_left) / @intToFloat(f32, attack_time));
+            if (self.*.direction == .left) angle = -angle;
+            var area = self.sword_area();
+            const x = area[0][0];
+            const y = area[0][1];
+            const width = area[1][0] - area[0][0];
+            const height = area[2][1] - area[0][1];
+
+            // Draw attacking sword
+            if (self.*.direction == .right) utils.mirror(&area);
+            utils.rotate_point(&area, .{ x + width / 2, y + height }, angle);
+            game.Sprite.player_sword.draw(area);
+
+            // Draw attacking player
+            self.drawSprite(.player_fall);
+
+            // Handle state
+            attack.*.time_left -= 1;
+            if (attack.*.time_left == 0) self.*.state = .regular;
         },
     }
 
@@ -125,14 +165,6 @@ pub fn run(self: *Player, state: *game.State) void {
             } else self.*.y = block.y + block.height;
             self.*.y_speed = 0;
         }
-    }
-
-    // Draw sword
-    if (self.*.grounded) {
-        const offset_x: f32 = if (self.*.direction == .left) -32 else 0;
-        var area = utils.rectangle(self.*.x - offset_x, self.*.y - 74, 32, 96);
-        if (self.*.direction == .right) utils.mirror(&area);
-        game.Sprite.player_sword.draw(area);
     }
 
     // Apply speed
