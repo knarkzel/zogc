@@ -32,7 +32,7 @@ pub const Sprite = enum {
             .player_jump => .{ 0, 32, 32, 32 },
             .player_fall => .{ 32, 32, 32, 32 },
             .player_dead => .{ 32, 64, 32, 32 },
-            .player_attacking => .{ 64, 64, 32, 32 },
+            .player_attacking => .{ 32, 64, 32, 32 },
             .player_sword => .{ 64, 0, 32, 96 },
             .slime_idle => .{ 128, 0, 32, 32 },
             .grass => .{ 160, 96, 32, 32 },
@@ -47,7 +47,7 @@ pub const Sprite = enum {
 // Global state
 pub const State = struct {
     players: [4]?Player = .{null} ** 4,
-    blocks: [screen_width / 32]Block = undefined,
+    blocks: [screen_width / 32 + 2]Block = undefined,
     slime: Slime,
 };
 
@@ -64,7 +64,7 @@ pub fn run(video: *Video) void {
     var state = State{
         .slime = Slime.init(200, 200),
     };
-    for (state.blocks) |*block, i| block.* = Block.init((@intToFloat(f32, i) * 32), screen_height - 32);
+    for (state.blocks) |*block, i| block.* = Block.init(-32 + (@intToFloat(f32, i) * 32), screen_height - 32);
 
     while (true) {
         // Handle new players
