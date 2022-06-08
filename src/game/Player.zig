@@ -5,9 +5,10 @@ const game = @import("game.zig");
 const components = @import("components.zig");
 const utils = @import("../utils.zig");
 
+const deadzone = 0.1;
 const jumps_max: u8 = 2;
 const dashes_max: u8 = 1;
-const attack_time: u8 = 20;
+const attack_time: u8 = 15;
 
 x: f32,
 y: f32,
@@ -23,6 +24,8 @@ grounded: bool = false,
 state: State = .regular,
 direction: Direction = .right,
 health: f32 = 3,
+
+const Direction = enum { left, right };
 
 pub fn init(x: f32, y: f32, port: usize) Player {
     return .{ .x = x, .y = y, .port = port };
@@ -44,16 +47,21 @@ pub fn setState(self: *Player, state: State) void {
     self.*.state = state;
 }
 
-const Direction = enum { left, right };
-
 pub fn drawSprite(self: *Player, comptime sprite: game.Sprite) void {
     var area = utils.rectangle(self.x, self.y, self.width, self.height);
     if (self.direction == .left) utils.mirror(&area);
+    if (self.state == .attack) utils.rotate(&area, self.sword_angle());
     sprite.draw(area);
 }
 
+fn sword_angle(self: *Player) f32 {
+    var angle: f32 = 360 - 360 * (@intToFloat(f32, self.state.attack.time_left) / @intToFloat(f32, attack_time));
+    if (self.direction == .left) angle = -angle;
+    return angle;
+}
+
 fn sword_area(self: *Player) [4][2]f32 {
-    const offset: [2]f32 = if (self.*.direction == .left) .{ -3, 90 } else .{ -29, 90 };
+    const offset: [2]f32 = if (self.direction == .left) .{ 2, 60 } else .{ -34, 60 };
     return utils.rectangle(self.*.x - offset[0], self.*.y - offset[1], 32, 96);
 }
 
@@ -70,7 +78,6 @@ pub fn run(self: *Player, state: *game.State) void {
     switch (self.*.state) {
         .regular => {
             // Movement
-            const deadzone = 0.1;
             const stick_x = Pad.stick_x(self.port);
             const stick_y = Pad.stick_y(self.port);
             if (stick_x > deadzone or stick_x < -deadzone) {
@@ -95,13 +102,6 @@ pub fn run(self: *Player, state: *game.State) void {
             // Attack
             if (Pad.button_down(.a, self.port)) self.*.state = .{ .attack = .{ .time_left = attack_time } };
 
-            // Draw regular sword
-            if (self.*.grounded) {
-                var area = self.sword_area();
-                if (self.*.direction == .right) utils.mirror(&area);
-                game.Sprite.player_sword.draw(area);
-            }
-
             // Sprites
             if (self.*.y_speed < 0) {
                 self.drawSprite(.player_fall);
@@ -124,8 +124,7 @@ pub fn run(self: *Player, state: *game.State) void {
             self.drawSprite(.player_dash);
         },
         .attack => |*attack| {
-            var angle: f32 = 90 - 90 * (@intToFloat(f32, attack.*.time_left) / @intToFloat(f32, attack_time));
-            if (self.*.direction == .left) angle = -angle;
+            const angle = self.sword_angle();
             var area = self.sword_area();
             const x = area[0][0];
             const y = area[0][1];
@@ -133,12 +132,16 @@ pub fn run(self: *Player, state: *game.State) void {
             const height = area[2][1] - area[0][1];
 
             // Draw attacking sword
-            if (self.*.direction == .right) utils.mirror(&area);
-            utils.rotate_point(&area, .{ x + width / 2, y + height }, angle);
+            if (self.direction == .right) {
+                utils.mirror(&area);
+                utils.rotate_point(&area, .{ x + width / 2, y + height }, 90);
+            } else utils.rotate_point(&area, .{ x + width / 2, y + height }, -90);
+
+            utils.rotate_point(&area, .{ self.x + self.width / 2, self.y + self.height / 2 }, angle);
             game.Sprite.player_sword.draw(area);
 
             // Draw attacking player
-            self.drawSprite(.player_fall);
+            self.drawSprite(.player_idle);
 
             // Handle state
             attack.*.time_left -= 1;
@@ -157,7 +160,7 @@ pub fn run(self: *Player, state: *game.State) void {
     var hp = self.*.health;
     while (hp > 0) : (hp -= 1) {
         var offset_x = (self.*.x - 48) + (hp * 32);
-        var area = utils.rectangle(offset_x, self.y - 32, 32, 32);
+        var area = utils.rectangle(offset_x, self.y - 36, 32, 32);
         game.Sprite.heart.draw(area);
     }
 }
