@@ -15,6 +15,7 @@ x_speed: f32 = 0,
 y_speed: f32 = 0,
 gravity: f32 = 0.25,
 direction: Direction = .right,
+health: f32 = 5,
 
 const Direction = enum { left, right };
 
@@ -33,6 +34,15 @@ pub fn init(x: f32, y: f32) Slime {
 
 pub fn drawSprite(self: *Slime, comptime sprite: game.Sprite) void {
     sprite.draw(self.area());
+}
+
+pub fn drawHealth(self: *Slime) void {
+    // Draw health
+    var hp = self.*.health;
+    while (hp > 0) : (hp -= 1) {
+        var offset_x = (self.*.x - 32) + (hp * 16);
+        game.Sprite.heart.draw(utils.rectangle(offset_x, self.y - 32, 32, 32));
+    }
 }
 
 pub fn area(self: *Slime) [4][2]f32 {
@@ -64,6 +74,8 @@ pub fn run(self: *Slime, state: *game.State) void {
 
             // Sprites
             if (self.y_speed != 0) self.drawSprite(.slime_jump) else self.drawSprite(.slime_idle);
+
+            self.drawHealth();
         },
         .charging => |*charging| {
             // Handle charging

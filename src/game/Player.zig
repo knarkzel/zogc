@@ -89,6 +89,14 @@ pub fn sword_area(self: *Player) ?[4][2]f32 {
     return box;
 }
 
+pub fn drawHealth(self: *Player) void {
+    var hp = self.*.health;
+    while (hp > 0) : (hp -= 1) {
+        var offset_x = (self.*.x - 16) + (hp * 16);
+        game.Sprite.heart.draw(utils.rectangle(offset_x, self.y - 32, 32, 32));
+    }
+}
+
 pub fn run(self: *Player, state: *game.State) void {
     // Exit
     if (Pad.button_down(.start, self.port)) std.os.exit(0);
@@ -96,12 +104,7 @@ pub fn run(self: *Player, state: *game.State) void {
     // States
     switch (self.*.state) {
         .regular => {
-            // Draw health
-            var hp = self.*.health;
-            while (hp > 0) : (hp -= 1) {
-                var offset_x = (self.*.x - 16) + (hp * 16);
-                game.Sprite.heart.draw(utils.rectangle(offset_x, self.y - 32, 32, 32));
-            }
+            self.drawHealth();
 
             // Movement
             const stick_x = Pad.stick_x(self.port);
