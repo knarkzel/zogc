@@ -8,6 +8,7 @@ const Pad = @import("../ogc/Pad.zig");
 const Player = @import("Player.zig");
 const Slime = @import("Slime.zig");
 const Block = @import("Block.zig");
+const Wall = @import("Wall.zig");
 
 // Global sprites
 pub const Sprite = enum {
@@ -21,6 +22,7 @@ pub const Sprite = enum {
     slime_idle,
     slime_jump,
     slime_fall,
+    slime_hurt,
     grass,
     dirt,
     brick,
@@ -41,6 +43,7 @@ pub const Sprite = enum {
             .slime_idle => .{ 96, 0, 32, 32 },
             .slime_jump => .{ 128, 0, 32, 32 },
             .slime_fall => .{ 96, 32, 32, 32 },
+            .slime_hurt => .{ 128, 32, 32, 32 },
             .grass => .{ 160, 96, 32, 32 },
             .dirt => .{ 192, 96, 32, 32 },
             .brick => .{ 0, 160, 32, 32 },
@@ -56,6 +59,7 @@ pub const Sprite = enum {
 pub const State = struct {
     players: [4]?Player = .{null} ** 4,
     blocks: [screen_width / 32 + 2]Block = undefined,
+    walls: [300]Wall = undefined,
     slime: Slime,
 };
 
@@ -74,6 +78,20 @@ pub fn run(video: *Video) void {
     };
     for (state.blocks) |*block, i| block.* = Block.init(-32 + (@intToFloat(f32, i) * 32), screen_height - 32);
 
+
+    var x: f32 = 0; 
+    var y: f32 = 0;
+
+    
+    for (state.walls) |*wall | {
+        wall.* = Wall.init(x * 32, y * 32);
+        x += 1;
+        if (x * 32 >= screen_width) {
+            y += 1;
+            x = 0;
+        }
+    }
+
     while (true) {
         // Handle new players
         for (Pad.update()) |controller, i| {
@@ -82,8 +100,10 @@ pub fn run(video: *Video) void {
 
         video.start();
 
-        for (state.players) |*object| if (object.*) |*player| player.run(&state);
+        for (state.walls) |*wall| wall.drawSprite(.brick);
         for (state.blocks) |*block| block.drawSprite(.block);
+        for (state.players) |*object| if (object.*) |*player| player.run(&state);
+
         state.slime.run(&state);
 
         video.finish();
