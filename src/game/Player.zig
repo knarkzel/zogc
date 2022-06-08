@@ -145,7 +145,7 @@ pub fn run(self: *Player, state: *game.State) void {
             game.Sprite.player_sword.draw(area);
 
             // Draw attacking player
-            self.drawSprite(.player_attacking);
+            self.drawSprite(.player_attack);
 
             // Handle state
             attack.*.time_left -= 1;

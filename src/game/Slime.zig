@@ -18,7 +18,7 @@ direction: Direction = .right,
 
 const Direction = enum { left, right };
 
-const State = union(enum) { regular: struct { time_left: u8 } };
+const State = union(enum) { regular: struct { time_left: u8 }, charging: struct { time_left: u8 } };
 
 pub fn init(x: f32, y: f32) Slime {
     return .{ .x = x, .y = y, .state = .{ .regular = .{ .time_left = 60 } }, .rng = Rng.init(0) };
@@ -39,13 +39,33 @@ pub fn run(self: *Slime, state: *game.State) void {
         .regular => |*regular| {
             regular.*.time_left -= 1;
             if (regular.time_left == 0) {
-                self.*.x_speed = @intToFloat(f32, self.rng.random().intRangeAtMost(i8, -1, 1));
-                if (self.x_speed < 0) self.*.direction = .left else self.*.direction = .right;
-                regular.*.time_left = self.rng.random().intRangeAtMost(u8, 30, 240);
+                if (self.rng.random().boolean()) {
+                    self.*.x_speed = 0;
+                    self.*.state = .{ .charging = .{ .time_left = 30 } };
+                } else {
+                    self.*.x_speed = @intToFloat(f32, self.rng.random().intRangeAtMost(i8, -1, 1));
+                    regular.*.time_left = self.rng.random().intRangeAtMost(u8, 30, 240);
+                }
             }
+
+            // Sprites
+            if (self.y_speed > 0) self.drawSprite(.slime_jump) else if (self.y_speed < 0) self.drawSprite(.slime_fall) else self.drawSprite(.slime_idle);
+        },
+        .charging => |*charging| {
+            // Handle charging
+            charging.*.time_left -= 1;
+            if (charging.time_left == 0) {
+                self.*.x_speed = @intToFloat(f32, self.rng.random().intRangeAtMost(i32, -3, 3));
+                self.*.y_speed = @intToFloat(f32, self.rng.random().intRangeAtMost(i32, 5, 10));
+                self.*.state = .{ .regular = .{ .time_left = 60 } };
+            }
+
+            // Sprites
+            self.drawSprite(.slime_fall);
         },
     }
 
-    // Sprites
-    self.drawSprite(.slime_idle);
+    // Direction
+    if (self.x_speed < 0) self.*.direction = .left;
+    if (self.x_speed > 0) self.*.direction = .right;
 }
