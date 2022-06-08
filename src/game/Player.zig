@@ -118,6 +118,11 @@ pub fn run(self: *Player, state: *game.State) void {
                 self.jumps -= 1;
             }
 
+            // Draw glider
+            if (self.*.gravity == 0.01) {
+                game.Sprite.glider.draw(utils.rectangle(self.x, self.y - 64, 64, 64));
+            }
+
             // Dash
             if (Pad.button_down(.x, self.port) and self.dashes > 0) {
                 self.*.y_speed = 0;
