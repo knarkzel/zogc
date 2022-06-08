@@ -120,6 +120,9 @@ pub fn run(video: *Video) void {
         state.slime.run(&state);
         for (state.players) |*object| if (object.*) |*player| player.run(&state);
 
+        // Temporary death handling for slime
+        if (state.slime.isDead or state.slime.y > screen_height) state.slime = Slime.init(200, 200);
+
         video.finish();
     }
 }

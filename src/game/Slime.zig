@@ -16,6 +16,7 @@ y_speed: f32 = 0,
 gravity: f32 = 0.25,
 direction: Direction = .right,
 health: f32 = 5,
+isDead: bool = false,
 
 const Direction = enum { left, right };
 
@@ -51,6 +52,10 @@ pub fn area(self: *Slime) [4][2]f32 {
 }
 
 pub fn run(self: *Slime, state: *game.State) void {
+
+    // Death check
+    if (self.health <= 0) self.*.isDead = true;
+
     // Components
     components.add_physics(self, state);
 
