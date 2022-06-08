@@ -25,9 +25,13 @@ pub fn init(x: f32, y: f32) Slime {
 }
 
 pub fn drawSprite(self: *Slime, comptime sprite: game.Sprite) void {
-    var area = utils.rectangle(self.x, self.y, self.width, self.height);
-    if (self.direction == .left) utils.mirror(&area);
-    sprite.draw(area);
+    var box = self.area();
+    if (self.direction == .left) utils.mirror(&box);
+    sprite.draw(self.area());
+}
+
+pub fn area(self: *Slime) [4][2]f32 {
+    return utils.rectangle(self.x, self.y, self.width, self.height);
 }
 
 pub fn run(self: *Slime, state: *game.State) void {
@@ -49,7 +53,7 @@ pub fn run(self: *Slime, state: *game.State) void {
             }
 
             // Sprites
-            if (self.y_speed > 0) self.drawSprite(.slime_jump) else if (self.y_speed < 0) self.drawSprite(.slime_fall) else self.drawSprite(.slime_idle);
+            if (self.y_speed != 0) self.drawSprite(.slime_jump) else self.drawSprite(.slime_idle);
         },
         .charging => |*charging| {
             // Handle charging
