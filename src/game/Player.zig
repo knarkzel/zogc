@@ -53,25 +53,40 @@ pub fn setState(self: *Player, state: State) void {
 }
 
 pub fn drawSprite(self: *Player, comptime sprite: game.Sprite) void {
-    var box = self.area();
-    if (self.direction == .left) utils.mirror(&box);
-    if (self.state == .attack) utils.rotate(&box, self.sword_angle());
-    sprite.draw(box);
+    sprite.draw(self.area());
 }
 
 pub fn area(self: *Player) [4][2]f32 {
-    return utils.rectangle(self.x, self.y, self.width, self.height);
+    var box = utils.rectangle(self.x, self.y, self.width, self.height);
+    if (self.direction == .left) utils.mirror(&box);
+    if (self.state == .attack) utils.rotate(&box, utils.center(box), self.sword_angle().?);
+    return box;
 }
 
-fn sword_angle(self: *Player) f32 {
+fn sword_angle(self: *Player) ?f32 {
+    if (self.state != .attack) return null;
     var angle: f32 = 360 - 360 * (@intToFloat(f32, self.state.attack.time_left) / @intToFloat(f32, attack_time));
     if (self.direction == .left) angle = -angle;
     return angle;
 }
 
-fn sword_area(self: *Player) [4][2]f32 {
+pub fn sword_area(self: *Player) ?[4][2]f32 {
+    if (self.state != .attack) return null;
     const offset: [2]f32 = if (self.direction == .left) .{ 2, 60 } else .{ -34, 60 };
-    return utils.rectangle(self.*.x - offset[0], self.*.y - offset[1], 32, 96);
+    const angle = self.sword_angle().?;
+    var box = utils.rectangle(self.*.x - offset[0], self.*.y - offset[1], 32, 96);
+    const x = box[0][0];
+    const y = box[0][1];
+    const width = box[1][0] - box[0][0];
+    const height = box[2][1] - box[0][1];
+
+    // Draw attacking sword
+    if (self.direction == .right) {
+        utils.mirror(&box);
+        utils.rotate(&box, .{ x + width / 2, y + height }, 90);
+    } else utils.rotate(&box, .{ x + width / 2, y + height }, -90);
+    utils.rotate(&box, .{ self.x + self.width / 2, self.y + self.height / 2 }, angle);
+    return box;
 }
 
 pub fn run(self: *Player, state: *game.State) void {
@@ -135,21 +150,8 @@ pub fn run(self: *Player, state: *game.State) void {
             self.drawSprite(.player_dash);
         },
         .attack => |*attack| {
-            const angle = self.sword_angle();
-            var box = self.sword_area();
-            const x = box[0][0];
-            const y = box[0][1];
-            const width = box[1][0] - box[0][0];
-            const height = box[2][1] - box[0][1];
-
-            // Draw attacking sword
-            if (self.direction == .right) {
-                utils.mirror(&box);
-                utils.rotate_point(&box, .{ x + width / 2, y + height }, 90);
-            } else utils.rotate_point(&box, .{ x + width / 2, y + height }, -90);
-
-            utils.rotate_point(&box, .{ self.x + self.width / 2, self.y + self.height / 2 }, angle);
-            game.Sprite.player_sword.draw(box);
+            // Draw spinning sword
+            game.Sprite.player_sword.draw(self.sword_area().?);
 
             // Draw attacking player
             self.drawSprite(.player_attack);
@@ -179,12 +181,12 @@ pub fn run(self: *Player, state: *game.State) void {
     }
 
     // Hurtbox component
-    if (utils.collides(self.area(), state.slime.area()) and self.state != .hurt) {
-        self.*.health -= 1;
-
-        self.*.y_speed = 5;
-        const delta_x: f32 = if (self.x < state.slime.x + state.slime.width / 2) -5 else 5;
-        self.*.state = .{ .hurt = .{ .time_left = 30, .delta_x = delta_x } };
+    if (self.state != .hurt) {
+        if (utils.diag_collides(self.area(), state.slime.area())) |delta| {
+            self.*.health -= 1;
+            self.*.y_speed = delta[1] - 0.5;
+            self.*.state = .{ .hurt = .{ .time_left = 30, .delta_x = -delta[0] } };
+        }
     }
 
     // Physics component

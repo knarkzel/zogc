@@ -54,6 +54,12 @@ pub fn rectangle(x: f32, y: f32, width: f32, height: f32) [4][2]f32 {
     return .{ .{ x, y }, .{ x + width, y }, .{ x + width, y + height }, .{ x, y + height } };
 }
 
+pub fn center(area: [4][2]f32) [2]f32 {
+    const width = area[1][0] - area[0][0];
+    const height = area[2][1] - area[0][1];
+    return .{ area[0][0] + width / 2, area[0][1] + height / 2 };
+}
+
 // Mirrors area
 pub fn mirror(area: *[4][2]f32) void {
     var temporary = area[0];
@@ -64,16 +70,8 @@ pub fn mirror(area: *[4][2]f32) void {
     area[3] = temporary;
 }
 
-// Rotates area around center by angle (degrees)
-pub fn rotate(area: *[4][2]f32, angle: f32) void {
-    const width = area[1][0] - area[0][0];
-    const height = area[2][1] - area[0][1];
-    const origo = .{ area[0][0] + width / 2, area[0][1] + height / 2 };
-    rotate_point(area, origo, angle);
-}
-
-// Rotates area around point by angle (degrees)
-pub fn rotate_point(area: *[4][2]f32, origo: [2]f32, angle: f32) void {
+/// Rotates area around point by angle (degrees)
+pub fn rotate(area: *[4][2]f32, origo: [2]f32, angle: f32) void {
     const radians = angle * std.math.pi / 180;
     for (area) |*point| {
         const x = point[0] - origo[0];
@@ -83,6 +81,31 @@ pub fn rotate_point(area: *[4][2]f32, origo: [2]f32, angle: f32) void {
     }
 }
 
-pub fn collides(rx: [4][2]f32, ry: [4][2]f32) bool {
+/// Checks collision for axis aligned bounding boxes (no rotation)
+pub fn aabb_collides(rx: [4][2]f32, ry: [4][2]f32) bool {
     return (rx[0][0] < ry[1][0] and rx[1][0] > ry[0][0] and rx[0][1] < ry[2][1] and rx[2][1] > ry[0][1]);
+}
+
+/// Checks collision for any bounding boxes (with rotation), returns relative displacement
+pub fn diag_collides(rx: [4][2]f32, ry: [4][2]f32) ?[2]f32 {
+    // Diagonals of rectangle
+    var i: usize = 0;
+    while (i < rx.len) : (i += 1) {
+        const line = .{ center(rx), rx[i] };
+
+        // Edges of other rectangle
+        var j: usize = 0;
+        while (j < ry.len) : (j += 1) {
+            const edge = .{ ry[j], ry[(j + 1) % ry.len] };
+            const h = (edge[1][0] - edge[0][0]) * (line[0][1] - line[1][1]) - (line[0][0] - line[1][0]) * (edge[1][1] - edge[0][1]);
+            const t1: f32 = ((edge[0][1] - edge[1][1]) * (line[0][0] - edge[0][0]) + (edge[1][0] - edge[0][0]) * (line[0][1] - edge[0][1])) / h;
+            const t2: f32 = ((line[0][1] - line[1][1]) * (line[0][0] - edge[0][0]) + (line[1][0] - line[0][0]) * (line[0][1] - edge[0][1])) / h;
+
+            // If collision
+            if (t1 >= 0 and t1 < 1 and t2 >= 0 and t2 < 1) {
+                return [2]f32{ (1 - t1) * (line[1][0] - line[0][0]), (1 - t1) * (line[1][1] - line[0][1]) };
+            }
+        }
+    }
+    return null;
 }

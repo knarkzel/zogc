@@ -14,13 +14,13 @@ pub fn add_physics(self: anytype, state: *game.State) void {
         const block_area = utils.rectangle(block.x, block.y, block.width, block.height);
 
         // Horizontal
-        if (utils.collides(block_area, utils.rectangle(self.x + self.x_speed, self.y, self.width, self.height))) {
+        if (utils.aabb_collides(block_area, utils.rectangle(self.x + self.x_speed, self.y, self.width, self.height))) {
             if (self.x_speed < 0) self.*.x = block.x + block.width else self.*.x = block.x - self.width;
             self.*.x_speed = 0;
         }
 
         // Vertical
-        if (utils.collides(block_area, utils.rectangle(self.x, self.y - self.y_speed, self.width, self.height))) {
+        if (utils.aabb_collides(block_area, utils.rectangle(self.x, self.y - self.y_speed, self.width, self.height))) {
             if (self.y_speed < 0) {
                 if (@hasField(@TypeOf(self.*), "grounded")) self.*.grounded = true;
                 self.*.y = block.y - self.height;

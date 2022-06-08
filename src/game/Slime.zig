@@ -18,26 +18,36 @@ direction: Direction = .right,
 
 const Direction = enum { left, right };
 
-const State = union(enum) { regular: struct { time_left: u8 }, charging: struct { time_left: u8 } };
+const State = union(enum) {
+    regular: struct { time_left: u8 },
+    charging: struct { time_left: u8 },
+    hurt: struct {
+        time_left: u8,
+        velocity_x: f32,
+    },
+};
 
 pub fn init(x: f32, y: f32) Slime {
     return .{ .x = x, .y = y, .state = .{ .regular = .{ .time_left = 60 } }, .rng = Rng.init(0) };
 }
 
 pub fn drawSprite(self: *Slime, comptime sprite: game.Sprite) void {
-    var box = self.area();
-    if (self.direction == .left) utils.mirror(&box);
     sprite.draw(self.area());
 }
 
 pub fn area(self: *Slime) [4][2]f32 {
-    return utils.rectangle(self.x, self.y, self.width, self.height);
+    var box = utils.rectangle(self.x, self.y, self.width, self.height);
+    if (self.direction == .left) utils.mirror(&box);
+    return box;
 }
 
 pub fn run(self: *Slime, state: *game.State) void {
     // Components
     components.add_physics(self, state);
 
+    // Horizontal velocity
+    if (@fabs(self.x_speed) > 0) self.*.x_speed /= 1.1;
+    
     // Movement
     switch (self.*.state) {
         .regular => |*regular| {
@@ -67,6 +77,31 @@ pub fn run(self: *Slime, state: *game.State) void {
             // Sprites
             self.drawSprite(.slime_fall);
         },
+        .hurt => |*hurt| {
+            // Movement
+            // const sign: f32 = if (hurt.velocity_x > 0) 1 else -1;
+            hurt.*.velocity_x /= 2;
+            self.*.x_speed += hurt.velocity_x;
+
+            // Draw hurt slime
+            self.drawSprite(.slime_hurt);
+
+            // Handle state
+            hurt.*.time_left -= 1;
+            if (hurt.time_left == 0) self.*.state = .{ .regular = .{ .time_left = 120 } };
+        },
+    }
+
+    // Get hurt by player
+    for (state.players) |*object| {
+        if (object.*) |*player| {
+            if (player.sword_area()) |sword| {
+                if (utils.diag_collides(self.area(), sword)) |delta| {
+                    self.*.y_speed = std.math.clamp(delta[1], -10, 10);
+                    self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -std.math.clamp(delta[0], -10, 10) } };
+                }
+            }
+        }
     }
 
     // Direction

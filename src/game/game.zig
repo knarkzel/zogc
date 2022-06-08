@@ -107,6 +107,7 @@ pub fn run(video: *Video) void {
         for (state.players) |object| if (object) |player| {
             state.camera.follow(player.x, player.y);
             video.camera(state.camera.x, state.camera.y);
+            break;
         };
 
         // Other
