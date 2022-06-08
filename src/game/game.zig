@@ -5,6 +5,7 @@ const Gpu = @import("../ogc/Gpu.zig");
 const Pad = @import("../ogc/Pad.zig");
 
 // Objects
+const Camera = @import("Camera.zig");
 const Player = @import("Player.zig");
 const Slime = @import("Slime.zig");
 const Block = @import("Block.zig");
@@ -59,11 +60,12 @@ pub const State = struct {
     players: [4]?Player = .{null} ** 4,
     blocks: [screen_width / 32 + 2]Block = undefined,
     slime: Slime,
+    camera: Camera,
 };
 
 // Constants
-const screen_width = 640;
-const screen_height = 480;
+pub const screen_width: f32 = 640;
+pub const screen_height: f32 = 480;
 
 pub fn run(video: *Video) void {
     // Texture
@@ -73,6 +75,7 @@ pub fn run(video: *Video) void {
     // State
     var state = State{
         .slime = Slime.init(200, 200),
+        .camera = Camera.init(),
     };
     for (state.blocks) |*block, i| block.* = Block.init(-32 + (@intToFloat(f32, i) * 32), screen_height - 32);
 
@@ -84,6 +87,13 @@ pub fn run(video: *Video) void {
 
         video.start();
 
+        // Camera
+        for (state.players) |object| if (object) |player| {
+            state.camera.follow(player.x, player.y);
+            video.camera(state.camera.x, state.camera.y);
+        };
+
+        // Other
         for (state.players) |*object| if (object.*) |*player| player.run(&state);
         for (state.blocks) |*block| block.drawSprite(.block);
         state.slime.run(&state);

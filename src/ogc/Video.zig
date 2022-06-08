@@ -5,6 +5,7 @@ const Video = @This();
 mode: *c.GXRModeObj,
 framebuffers: [2]*anyopaque,
 index: u8,
+perspective: c.Mtx44 = undefined,
 
 pub fn init() Video {
     c.VIDEO_Init();
@@ -39,14 +40,19 @@ pub fn init() Video {
 
     // Set perspective matrix
     var perspective: c.Mtx44 = undefined;
-    c.guOrtho(&perspective, 0, 479, 0, 639, 0, 300);
+    c.guOrtho(&perspective, 0, 479, 0, 639, 0, 320);
     c.GX_LoadProjectionMtx(&perspective, c.GX_ORTHOGRAPHIC);
 
-    return Video{ .mode = mode, .framebuffers = fbs, .index = fbi };
+    return Video{ .mode = mode, .framebuffers = fbs, .index = fbi, .perspective = perspective };
 }
 
 pub fn start(self: *Video) void {
     c.GX_SetViewport(0, 0, @intToFloat(f32, self.mode.fbWidth), @intToFloat(f32, self.mode.efbHeight), 0, 1);
+}
+
+pub fn camera(self: *Video, x: f32, y: f32) void {
+    c.guOrtho(&self.perspective, y, y + 479, x, x + 639, 0, 320);
+    c.GX_LoadProjectionMtx(&self.perspective, c.GX_ORTHOGRAPHIC);
 }
 
 pub fn finish(self: *Video) void {
