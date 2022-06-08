@@ -35,12 +35,16 @@ pub fn init(x: f32, y: f32, port: usize) Player {
 const State = union(enum) {
     regular,
     dash: struct {
-        time_left: u8 = 10,
+        time_left: u8,
         delta_x: f32,
         delta_y: f32,
     },
     attack: struct {
         time_left: u8,
+    },
+    hurt: struct {
+        time_left: u8,
+        delta_x: f32,
     },
 };
 
@@ -49,10 +53,14 @@ pub fn setState(self: *Player, state: State) void {
 }
 
 pub fn drawSprite(self: *Player, comptime sprite: game.Sprite) void {
-    var area = utils.rectangle(self.x, self.y, self.width, self.height);
-    if (self.direction == .left) utils.mirror(&area);
-    if (self.state == .attack) utils.rotate(&area, self.sword_angle());
-    sprite.draw(area);
+    var box = self.area();
+    if (self.direction == .left) utils.mirror(&box);
+    if (self.state == .attack) utils.rotate(&box, self.sword_angle());
+    sprite.draw(box);
+}
+
+pub fn area(self: *Player) [4][2]f32 {
+    return utils.rectangle(self.x, self.y, self.width, self.height);
 }
 
 fn sword_angle(self: *Player) f32 {
@@ -77,8 +85,7 @@ pub fn run(self: *Player, state: *game.State) void {
             var hp = self.*.health;
             while (hp > 0) : (hp -= 1) {
                 var offset_x = (self.*.x - 16) + (hp * 16);
-                var area = utils.rectangle(offset_x, self.y - 32, 32, 32);
-                game.Sprite.heart.draw(area);
+                game.Sprite.heart.draw(utils.rectangle(offset_x, self.y - 32, 32, 32));
             }
 
             // Movement
@@ -100,7 +107,7 @@ pub fn run(self: *Player, state: *game.State) void {
             if (Pad.button_down(.x, self.port) and self.dashes > 0) {
                 self.*.y_speed = 0;
                 self.dashes -= 1;
-                self.*.state = .{ .dash = .{ .delta_x = stick_x, .delta_y = stick_y } };
+                self.*.state = .{ .dash = .{ .time_left = 10, .delta_x = stick_x, .delta_y = stick_y } };
             }
 
             // Attack
@@ -129,20 +136,20 @@ pub fn run(self: *Player, state: *game.State) void {
         },
         .attack => |*attack| {
             const angle = self.sword_angle();
-            var area = self.sword_area();
-            const x = area[0][0];
-            const y = area[0][1];
-            const width = area[1][0] - area[0][0];
-            const height = area[2][1] - area[0][1];
+            var box = self.sword_area();
+            const x = box[0][0];
+            const y = box[0][1];
+            const width = box[1][0] - box[0][0];
+            const height = box[2][1] - box[0][1];
 
             // Draw attacking sword
             if (self.direction == .right) {
-                utils.mirror(&area);
-                utils.rotate_point(&area, .{ x + width / 2, y + height }, 90);
-            } else utils.rotate_point(&area, .{ x + width / 2, y + height }, -90);
+                utils.mirror(&box);
+                utils.rotate_point(&box, .{ x + width / 2, y + height }, 90);
+            } else utils.rotate_point(&box, .{ x + width / 2, y + height }, -90);
 
-            utils.rotate_point(&area, .{ self.x + self.width / 2, self.y + self.height / 2 }, angle);
-            game.Sprite.player_sword.draw(area);
+            utils.rotate_point(&box, .{ self.x + self.width / 2, self.y + self.height / 2 }, angle);
+            game.Sprite.player_sword.draw(box);
 
             // Draw attacking player
             self.drawSprite(.player_attack);
@@ -151,6 +158,33 @@ pub fn run(self: *Player, state: *game.State) void {
             attack.*.time_left -= 1;
             if (attack.*.time_left == 0) self.*.state = .regular;
         },
+        .hurt => |*hurt| {
+            // Movement
+            self.*.x_speed = hurt.delta_x;
+
+            // Draw hurt player
+            self.drawSprite(.player_hurt);
+
+            // Handle state
+            hurt.*.time_left -= 1;
+            if (hurt.time_left == 0) {
+                if (self.health == 0) {
+                    self.*.state = .regular;
+                    self.* = Player.init(128, 32, self.port);
+                    return;
+                }
+                self.*.state = .regular;
+            }
+        },
+    }
+
+    // Hurtbox component
+    if (utils.collides(self.area(), state.slime.area()) and self.state != .hurt) {
+        self.*.health -= 1;
+
+        self.*.y_speed = 5;
+        const delta_x: f32 = if (self.x < state.slime.x + state.slime.width / 2) -5 else 5;
+        self.*.state = .{ .hurt = .{ .time_left = 30, .delta_x = delta_x } };
     }
 
     // Physics component
