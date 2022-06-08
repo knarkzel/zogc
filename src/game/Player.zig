@@ -2,6 +2,7 @@ const Player = @This();
 const std = @import("std");
 const Pad = @import("../ogc/Pad.zig");
 const game = @import("game.zig");
+const components = @import("components.zig");
 const utils = @import("../utils.zig");
 
 const jumps_max: u8 = 2;
@@ -13,11 +14,12 @@ y: f32,
 port: usize,
 x_speed: f32 = 0,
 y_speed: f32 = 0,
+width: f32 = 64,
+height: f32 = 64,
+gravity: f32 = 0.25,
 jumps: u8 = jumps_max,
 dashes: u8 = dashes_max,
 grounded: bool = false,
-width: f32 = 64,
-height: f32 = 64,
 state: State = .regular,
 direction: Direction = .right,
 health: f32 = 3,
@@ -77,8 +79,7 @@ pub fn run(self: *Player, state: *game.State) void {
             } else self.*.x_speed = 0;
 
             // Jumping
-            const gravity: f32 = if (Pad.button_held(.y, self.port) and self.*.y_speed < 0) 0.01 else 0.25;
-            if (self.*.y_speed > -6) self.*.y_speed -= gravity;
+            self.*.gravity = if (Pad.button_held(.y, self.port) and self.*.y_speed < 0) 0.01 else 0.25;
             if (Pad.button_down(.y, self.port) and self.jumps > 0) {
                 self.*.y_speed = speed;
                 self.jumps -= 1;
@@ -145,27 +146,11 @@ pub fn run(self: *Player, state: *game.State) void {
         },
     }
 
-    // Collision
-    self.*.grounded = false;
-    for (state.blocks) |block| {
-        const block_area = utils.rectangle(block.x, block.y, block.width, block.height);
-
-        // Horizontal
-        if (utils.collides(block_area, utils.rectangle(self.x + self.x_speed, self.y, self.width, self.height))) {
-            if (self.x_speed < 0) self.*.x = block.x + block.width else self.*.x = block.x - self.width;
-            self.*.x_speed = 0;
-        }
-
-        // Vertical
-        if (utils.collides(block_area, utils.rectangle(self.x, self.y - self.y_speed, self.width, self.height))) {
-            if (self.y_speed < 0) {
-                if (self.state == .regular) self.*.grounded = true;
-                self.jumps = jumps_max;
-                self.dashes = dashes_max;
-                self.*.y = block.y - self.height;
-            } else self.*.y = block.y + block.height;
-            self.*.y_speed = 0;
-        }
+    // Physics component
+    components.add_physics(self, state);
+    if (self.state == .regular and self.grounded) {
+        self.*.jumps = jumps_max;
+        self.*.dashes = dashes_max;
     }
 
     // Draw health
@@ -175,8 +160,4 @@ pub fn run(self: *Player, state: *game.State) void {
         var area = utils.rectangle(offset_x, self.y - 32, 32, 32);
         game.Sprite.heart.draw(area);
     }
-
-    // Apply speed
-    self.*.x += self.*.x_speed;
-    self.*.y -= self.*.y_speed;
 }
