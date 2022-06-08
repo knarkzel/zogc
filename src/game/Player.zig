@@ -77,6 +77,15 @@ pub fn run(self: *Player, state: *game.State) void {
     // States
     switch (self.*.state) {
         .regular => {
+
+            // Draw health
+            var hp = self.*.health;
+            while (hp > 0) : (hp -= 1) {
+                var offset_x = (self.*.x - 16) + (hp * 16);
+                var area = utils.rectangle(offset_x, self.y - 32, 32, 32);
+                game.Sprite.heart.draw(area);
+            }
+
             // Movement
             const stick_x = Pad.stick_x(self.port);
             const stick_y = Pad.stick_y(self.port);
@@ -154,13 +163,5 @@ pub fn run(self: *Player, state: *game.State) void {
     if (self.state == .regular and self.grounded) {
         self.*.jumps = jumps_max;
         self.*.dashes = dashes_max;
-    }
-
-    // Draw health
-    var hp = self.*.health;
-    while (hp > 0) : (hp -= 1) {
-        var offset_x = (self.*.x - 48) + (hp * 32);
-        var area = utils.rectangle(offset_x, self.y - 36, 32, 32);
-        game.Sprite.heart.draw(area);
     }
 }
