@@ -21,6 +21,8 @@ pub const Sprite = enum {
     slime_idle,
     grass,
     dirt,
+    brick,
+    brick_altered,
     block,
     heart,
 
@@ -37,7 +39,9 @@ pub const Sprite = enum {
             .slime_idle => .{ 128, 0, 32, 32 },
             .grass => .{ 160, 96, 32, 32 },
             .dirt => .{ 192, 96, 32, 32 },
-            .block => .{ 224, 96, 32, 32 },
+            .brick => .{ 0, 160, 32, 32 },
+            .brick_altered => .{ 32, 160, 32, 32 },
+            .block => .{ 64, 160, 32, 32 },
             .heart => .{ 128, 96, 32, 32 },
         };
         utils.sprite(area, settings, .{ 256, 256 });
