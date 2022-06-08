@@ -37,7 +37,6 @@ pub fn drawSprite(self: *Slime, comptime sprite: game.Sprite) void {
 }
 
 pub fn drawHealth(self: *Slime) void {
-    // Draw health
     var hp = self.*.health;
     while (hp > 0) : (hp -= 1) {
         var offset_x = (self.*.x - 32) + (hp * 16);
@@ -111,6 +110,7 @@ pub fn run(self: *Slime, state: *game.State) void {
                 if (utils.diag_collides(self.area(), sword)) |delta| {
                     self.*.y_speed = std.math.clamp(delta[1], -10, 10);
                     self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -std.math.clamp(delta[0], -10, 10) } };
+                    self.*.health -= 1; 
                 }
             }
         }
