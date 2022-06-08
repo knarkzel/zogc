@@ -15,6 +15,8 @@ x_speed: f32 = 0,
 y_speed: f32 = 0,
 gravity: f32 = 0.25,
 direction: Direction = .right,
+health: f32 = 5,
+isDead: bool = false,
 
 const Direction = enum { left, right };
 
@@ -35,6 +37,14 @@ pub fn drawSprite(self: *Slime, comptime sprite: game.Sprite) void {
     sprite.draw(self.area());
 }
 
+pub fn drawHealth(self: *Slime) void {
+    var hp = self.*.health;
+    while (hp > 0) : (hp -= 1) {
+        var offset_x = (self.*.x - 32) + (hp * 16);
+        game.Sprite.heart.draw(utils.rectangle(offset_x, self.y - 32, 32, 32));
+    }
+}
+
 pub fn area(self: *Slime) [4][2]f32 {
     var box = utils.rectangle(self.x, self.y, self.width, self.height);
     if (self.direction == .left) utils.mirror(&box);
@@ -42,6 +52,10 @@ pub fn area(self: *Slime) [4][2]f32 {
 }
 
 pub fn run(self: *Slime, state: *game.State) void {
+
+    // Death check
+    if (self.health <= 0) self.*.isDead = true;
+
     // Components
     components.add_physics(self, state);
 
@@ -64,6 +78,8 @@ pub fn run(self: *Slime, state: *game.State) void {
 
             // Sprites
             if (self.y_speed != 0) self.drawSprite(.slime_jump) else self.drawSprite(.slime_idle);
+
+            self.drawHealth();
         },
         .charging => |*charging| {
             // Handle charging
@@ -92,13 +108,17 @@ pub fn run(self: *Slime, state: *game.State) void {
     }
 
     // Get hurt by player
-    for (state.players) |*object| {
-        if (object.*) |*player| {
-            if (player.sword_area()) |sword| {
-                if (utils.diag_collides(self.area(), sword)) |delta| {
-                    const knockback = 10;
-                    self.*.y_speed = delta[1] * knockback;
-                    self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -delta[0] * knockback } };
+    if (self.state != .hurt) {
+        for (state.players) |*object| {
+            if (object.*) |*player| {
+                if (player.sword_area()) |sword| {
+                    if (utils.diag_collides(self.area(), sword)) |delta| {
+                        const knockback = 8;
+                        self.*.y_speed = delta[1] * knockback;
+                        self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -delta[0] * knockback } };
+                        self.*.health -= 1;
+                        break;
+                    }
                 }
             }
         }

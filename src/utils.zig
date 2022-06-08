@@ -89,7 +89,6 @@ pub fn aabb_collides(rx: [4][2]f32, ry: [4][2]f32) bool {
 /// Checks collision for any bounding boxes (with rotation), returns relative displacement
 pub fn diag_collides(rx: [4][2]f32, ry: [4][2]f32) ?@Vector(2, f32) {
     // Diagonals of rectangle
-    var delta = [2]f32{ 0, 0 };
     var i: usize = 0;
     while (i < rx.len) : (i += 1) {
         const line = .{ center(rx), rx[i] };
@@ -104,16 +103,13 @@ pub fn diag_collides(rx: [4][2]f32, ry: [4][2]f32) ?@Vector(2, f32) {
 
             // If collision
             if (t1 >= 0 and t1 < 1 and t2 >= 0 and t2 < 1) {
-                delta[0] += (1 - t1) * (line[1][0] - line[0][0]);
-                delta[1] += (1 - t1) * (line[1][1] - line[0][1]);
+                const delta = .{ (1 - t1) * (line[1][0] - line[0][0]), (1 - t1) * (line[1][1] - line[0][1]) };
+                const hyp = @sqrt(delta[0] * delta[0] + delta[1] * delta[1]);
+                return [2]f32{ delta[0] / hyp, delta[1] / hyp };
             }
         }
     }
-
-    if (delta[0] != 0 or delta[1] != 0) {
-        const hyp = @sqrt(delta[0] * delta[0] + delta[1] * delta[1]);
-        return [2]f32{ delta[0] / hyp, delta[1] / hyp };
-    } else return null;
+    return null;
 }
 
 /// Checks collision for axis aligned bounding boxes (no rotation) and returns offset as [-1..1, -1..1]

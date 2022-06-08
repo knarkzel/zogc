@@ -25,6 +25,7 @@ pub const Sprite = enum {
     slime_jump,
     slime_fall,
     slime_hurt,
+    mushroom,
     glider,
     glider_low,
     grass,
@@ -49,6 +50,7 @@ pub const Sprite = enum {
             .slime_jump => .{ 128, 0, 32, 32 },
             .slime_fall => .{ 96, 32, 32, 32 },
             .slime_hurt => .{ 128, 32, 32, 32 },
+            .mushroom => .{ 96, 128, 32, 32 },
             .glider => .{ 160, 96, 32, 32 },
             .glider_low => .{ 160, 128, 32, 32 },
             .grass => .{ 192, 96, 32, 32 },
@@ -119,6 +121,9 @@ pub fn run(video: *Video) void {
         for (state.blocks) |*block| block.drawSprite(.block);
         state.slime.run(&state);
         for (state.players) |*object| if (object.*) |*player| player.run(&state);
+
+        // Temporary death handling for slime
+        if (state.slime.isDead or state.slime.y > screen_height) state.slime = Slime.init(200, 200);
 
         video.finish();
     }
