@@ -5,6 +5,10 @@ const utils = @import("../utils.zig");
 /// or not. Expects following variables: x, y, width, height, x_speed, y_speed, gravity, (grounded).
 /// Also modifies grounded if self has it.
 pub fn add_physics(self: anytype, state: *game.State) void {
+    // Bounds
+    if (self.x > 640) self.*.x = -64;
+    if (self.x + 64 < 0) self.*.x = 640;
+
     // Gravity
     if (self.y_speed > -6) self.y_speed -= self.gravity;
 

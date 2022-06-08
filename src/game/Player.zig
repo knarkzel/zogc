@@ -6,6 +6,7 @@ const components = @import("components.zig");
 const utils = @import("../utils.zig");
 
 const deadzone = 0.1;
+const speed: f32 = 10;
 const jumps_max: u8 = 2;
 const dashes_max: u8 = 1;
 const attack_time: u8 = 15;
@@ -69,15 +70,9 @@ pub fn run(self: *Player, state: *game.State) void {
     // Exit
     if (Pad.button_down(.start, self.port)) std.os.exit(0);
 
-    // Bounds
-    if (self.*.x > 640) self.*.x = -64;
-    if (self.*.x + 64 < 0) self.*.x = 640;
-    const speed: f32 = 10;
-
     // States
     switch (self.*.state) {
         .regular => {
-
             // Draw health
             var hp = self.*.health;
             while (hp > 0) : (hp -= 1) {
