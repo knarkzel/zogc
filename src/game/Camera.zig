@@ -3,7 +3,7 @@ const game = @import("game.zig");
 
 x: f32,
 y: f32,
-smoothing: f32 = 30,
+smoothing: f32 = 20,
 
 pub fn init() Camera {
     return .{ .x = 0, .y = 0 };
