@@ -47,7 +47,7 @@ pub fn run(self: *Slime, state: *game.State) void {
 
     // Horizontal velocity
     if (@fabs(self.x_speed) > 0) self.*.x_speed /= 1.1;
-    
+
     // Movement
     switch (self.*.state) {
         .regular => |*regular| {
@@ -79,8 +79,7 @@ pub fn run(self: *Slime, state: *game.State) void {
         },
         .hurt => |*hurt| {
             // Movement
-            // const sign: f32 = if (hurt.velocity_x > 0) 1 else -1;
-            hurt.*.velocity_x /= 2;
+            hurt.*.velocity_x /= 1.5;
             self.*.x_speed += hurt.velocity_x;
 
             // Draw hurt slime
@@ -97,8 +96,9 @@ pub fn run(self: *Slime, state: *game.State) void {
         if (object.*) |*player| {
             if (player.sword_area()) |sword| {
                 if (utils.diag_collides(self.area(), sword)) |delta| {
-                    self.*.y_speed = std.math.clamp(delta[1], -10, 10);
-                    self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -std.math.clamp(delta[0], -10, 10) } };
+                    const knockback = 10;
+                    self.*.y_speed = delta[1] * knockback;
+                    self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -delta[0] * knockback } };
                 }
             }
         }
