@@ -104,7 +104,6 @@ pub fn run(self: *Player, state: *game.State) void {
     // States
     switch (self.*.state) {
         .regular => {
-            self.drawHealth();
 
             // Movement
             const stick_x = Pad.stick_x(self.port);
@@ -142,6 +141,8 @@ pub fn run(self: *Player, state: *game.State) void {
             } else if (self.*.y_speed > 0) {
                 self.drawSprite(.player_jump);
             } else self.drawSprite(.player_idle);
+
+            self.drawHealth();
         },
         .dash => |*dash| {
             // Movement
