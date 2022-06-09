@@ -4,14 +4,15 @@ const utils = @import("../utils.zig");
 
 x: f32,
 y: f32,
+sprite: Sprite,
 width: f32 = 32,
 height: f32 = 32,
 
-pub fn init(x: f32, y: f32) Block {
-    return .{ .x = x, .y = y };
+pub fn init(x: f32, y: f32, sprite: Sprite) Block {
+    return .{ .x = x, .y = y, .sprite = sprite };
 }
 
-pub fn drawSprite(self: *Block, comptime sprite: Sprite) void {
+pub fn drawSprite(self: *Block) void {
     var area = utils.rectangle(self.x, self.y, self.width, self.height);
-    sprite.draw(area);
+    self.sprite.draw(area);
 }

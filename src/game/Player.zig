@@ -119,6 +119,9 @@ pub fn run(self: *Player, state: *game.State) void {
         if (Pad.button_down(.a, self.port)) self.*.state = .{ .attack = .{ .time_left = attack_time } };
     }
 
+    // Health
+    self.drawHealth();
+
     // States
     switch (self.*.state) {
         .regular => {
@@ -146,8 +149,6 @@ pub fn run(self: *Player, state: *game.State) void {
             } else if (self.*.y_speed > 0) {
                 self.drawSprite(.player_jump);
             } else self.drawSprite(.player_idle);
-
-            self.drawHealth();
         },
         .dash => |*dash| {
             // Movement

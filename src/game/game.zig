@@ -38,7 +38,7 @@ pub const Sprite = enum {
     block,
     heart,
 
-    pub fn draw(comptime self: Sprite, area: [4][2]f32) void {
+    pub fn draw(self: Sprite, area: [4][2]f32) void {
         const settings: [4]f32 = switch (self) {
             //                 x  y  w   h
             .player_idle => .{ 0, 0, 32, 32 },
@@ -111,7 +111,7 @@ pub fn run(video: *Video) !void {
         };
 
         // Other
-        for (state.blocks.items) |*block| block.drawSprite(.block);
+        for (state.blocks.items) |*block| block.drawSprite();
         state.mushroom.drawSprite(.mushroom);
         state.slime.run(&state);
         for (state.players) |*object| if (object.*) |*player| player.run(&state);

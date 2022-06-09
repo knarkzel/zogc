@@ -27,6 +27,7 @@ const State = union(enum) {
     hurt: struct {
         time_left: u8,
         velocity_x: f32,
+        hit_by: usize,
     },
 };
 
@@ -63,6 +64,9 @@ pub fn run(self: *Slime, state: *game.State) void {
     // Horizontal velocity
     if (@fabs(self.x_speed) > 0) self.*.x_speed /= 1.1;
 
+    // Health
+    self.drawHealth();
+
     // Movement
     switch (self.*.state) {
         .regular => |*regular| {
@@ -79,8 +83,6 @@ pub fn run(self: *Slime, state: *game.State) void {
 
             // Sprites
             if (self.y_speed != 0) self.drawSprite(.slime_jump) else self.drawSprite(.slime_idle);
-
-            self.drawHealth();
         },
         .charging => |*charging| {
             // Handle charging
@@ -109,9 +111,9 @@ pub fn run(self: *Slime, state: *game.State) void {
     }
 
     // Get hurt by player
-    if (self.state != .hurt) {
-        for (state.players) |*object| {
-            if (object.*) |*player| {
+    for (state.players) |*object| {
+        if (object.*) |*player| {
+            if (self.state != .hurt or self.state == .hurt and self.state.hurt.hit_by != player.port) {
                 if (player.sword_area()) |sword| {
                     if (utils.diag_collides(self.area(), sword)) |delta| {
                         if (player.dashes < Player.dashes_max) player.*.dashes += 1;
@@ -119,7 +121,7 @@ pub fn run(self: *Slime, state: *game.State) void {
                         const diff = self.x - player.x;
                         const sign: f32 = if ((diff > 0) == (delta[0] > 0) or (diff < 0) == (delta[0] < 0)) -1 else 1;
                         self.*.y_speed = delta[1] * knockback;
-                        self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -delta[0] * knockback * sign } };
+                        self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -delta[0] * knockback * sign, .hit_by = player.port } };
                         self.*.health -= 1;
                         break;
                     }
