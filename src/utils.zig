@@ -54,7 +54,7 @@ pub fn rectangle(x: f32, y: f32, width: f32, height: f32) [4][2]f32 {
     return .{ .{ x, y }, .{ x + width, y }, .{ x + width, y + height }, .{ x, y + height } };
 }
 
-pub fn center(area: [4][2]f32) [2]f32 {
+pub fn center(area: [4][2]f32) @Vector(2, f32) {
     const width = area[1][0] - area[0][0];
     const height = area[2][1] - area[0][1];
     return .{ area[0][0] + width / 2, area[0][1] + height / 2 };
@@ -87,7 +87,7 @@ pub fn aabb_collides(rx: [4][2]f32, ry: [4][2]f32) bool {
 }
 
 /// Checks collision for any bounding boxes (with rotation), returns relative displacement
-pub fn diag_collides(rx: [4][2]f32, ry: [4][2]f32) ?[2]f32 {
+pub fn diag_collides(rx: [4][2]f32, ry: [4][2]f32) ?@Vector(2, f32) {
     // Diagonals of rectangle
     var i: usize = 0;
     while (i < rx.len) : (i += 1) {
@@ -103,9 +103,20 @@ pub fn diag_collides(rx: [4][2]f32, ry: [4][2]f32) ?[2]f32 {
 
             // If collision
             if (t1 >= 0 and t1 < 1 and t2 >= 0 and t2 < 1) {
-                return [2]f32{ (1 - t1) * (line[1][0] - line[0][0]), (1 - t1) * (line[1][1] - line[0][1]) };
+                const delta = .{ (1 - t1) * (line[1][0] - line[0][0]), (1 - t1) * (line[1][1] - line[0][1]) };
+                const hyp = @sqrt(delta[0] * delta[0] + delta[1] * delta[1]);
+                return [2]f32{ delta[0] / hyp, delta[1] / hyp };
             }
         }
     }
     return null;
+}
+
+/// Checks collision for axis aligned bounding boxes (no rotation) and returns offset as [-1..1, -1..1]
+pub fn offset_collides(rx: [4][2]f32, ry: [4][2]f32) ?@Vector(2, f32) {
+    if (diag_collides(rx, ry)) |_| {
+        const delta = center(ry) - center(rx);
+        const hyp = @sqrt(delta[0] * delta[0] + delta[1] * delta[1]);
+        return [2]f32{ delta[0] / hyp, delta[1] / hyp };
+    } else return null;
 }

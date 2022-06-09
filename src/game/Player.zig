@@ -191,10 +191,11 @@ pub fn run(self: *Player, state: *game.State) void {
 
     // Hurtbox component
     if (self.state != .hurt) {
-        if (utils.diag_collides(self.area(), state.slime.area())) |delta| {
+        if (utils.offset_collides(self.area(), state.slime.area())) |delta| {
+            const knockback = 5;
             self.*.health -= 1;
-            self.*.y_speed = delta[1] - 0.5;
-            self.*.state = .{ .hurt = .{ .time_left = 30, .delta_x = -delta[0] } };
+            self.*.y_speed = delta[1] * knockback;
+            self.*.state = .{ .hurt = .{ .time_left = 30, .delta_x = -delta[0] * knockback } };
         }
     }
 

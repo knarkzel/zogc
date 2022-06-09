@@ -61,7 +61,7 @@ pub fn run(self: *Slime, state: *game.State) void {
 
     // Horizontal velocity
     if (@fabs(self.x_speed) > 0) self.*.x_speed /= 1.1;
-    
+
     // Movement
     switch (self.*.state) {
         .regular => |*regular| {
@@ -95,8 +95,7 @@ pub fn run(self: *Slime, state: *game.State) void {
         },
         .hurt => |*hurt| {
             // Movement
-            // const sign: f32 = if (hurt.velocity_x > 0) 1 else -1;
-            hurt.*.velocity_x /= 2;
+            hurt.*.velocity_x /= 1.5;
             self.*.x_speed += hurt.velocity_x;
 
             // Draw hurt slime
@@ -109,13 +108,19 @@ pub fn run(self: *Slime, state: *game.State) void {
     }
 
     // Get hurt by player
-    for (state.players) |*object| {
-        if (object.*) |*player| {
-            if (player.sword_area()) |sword| {
-                if (utils.diag_collides(self.area(), sword)) |delta| {
-                    self.*.y_speed = std.math.clamp(delta[1], -10, 10);
-                    self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -std.math.clamp(delta[0], -10, 10) } };
-                    self.*.health -= 1; 
+    if (self.state != .hurt) {
+        for (state.players) |*object| {
+            if (object.*) |*player| {
+                if (player.sword_area()) |sword| {
+                    if (utils.diag_collides(self.area(), sword)) |delta| {
+                        const knockback = 8;
+                        const diff = self.x - player.x;
+                        const sign: f32 = if ((diff > 0) == (delta[0] > 0) or (diff < 0) == (delta[0] < 0)) -1 else 1;
+                        self.*.y_speed = delta[1] * knockback;
+                        self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -delta[0] * knockback * sign } };
+                        self.*.health -= 1;
+                        break;
+                    }
                 }
             }
         }
