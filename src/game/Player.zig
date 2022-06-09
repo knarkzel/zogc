@@ -151,7 +151,7 @@ pub fn run(self: *Player, state: *game.State) void {
         },
         .dash => |*dash| {
             // Movement
-            self.*.x_speed = speed * dash.delta_x * 1.5;
+            self.*.x_speed = speed * dash.delta_x * 1.5 * 2;
             self.*.y_speed = speed * dash.delta_y * 1.5;
             dash.*.time_left -= 1;
             if (dash.*.time_left == 0) {
