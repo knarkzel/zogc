@@ -114,8 +114,10 @@ pub fn run(self: *Slime, state: *game.State) void {
                 if (player.sword_area()) |sword| {
                     if (utils.diag_collides(self.area(), sword)) |delta| {
                         const knockback = 8;
+                        const diff = self.x - player.x;
+                        const sign: f32 = if ((diff > 0) == (delta[0] > 0) or (diff < 0) == (delta[0] < 0)) -1 else 1;
                         self.*.y_speed = delta[1] * knockback;
-                        self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -delta[0] * knockback } };
+                        self.*.state = .{ .hurt = .{ .time_left = 30, .velocity_x = -delta[0] * knockback * sign } };
                         self.*.health -= 1;
                         break;
                     }
