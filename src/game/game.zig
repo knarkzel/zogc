@@ -10,6 +10,7 @@ const Player = @import("Player.zig");
 const Slime = @import("Slime.zig");
 const Block = @import("Block.zig");
 const Wall = @import("Wall.zig");
+const Mushroom = @import("Mushroom.zig");
 
 // Global sprites
 pub const Sprite = enum {
@@ -70,6 +71,7 @@ pub const State = struct {
     blocks: [screen_width / 32]Block = undefined,
     walls: [300]Wall = undefined,
     slime: Slime,
+    mushroom: Mushroom,
     camera: Camera,
 };
 
@@ -85,6 +87,7 @@ pub fn run(video: *Video) void {
     // State
     var state = State{
         .slime = Slime.init(200, 200),
+        .mushroom = Mushroom.init(300, screen_height - 64),
         .camera = Camera.init(),
     };
     for (state.blocks) |*block, i| block.* = Block.init((@intToFloat(f32, i) * 32), screen_height - 32);
@@ -119,6 +122,7 @@ pub fn run(video: *Video) void {
         // Other
         for (state.walls) |*wall| wall.drawSprite(.brick);
         for (state.blocks) |*block| block.drawSprite(.block);
+        state.mushroom.drawSprite(.mushroom);
         state.slime.run(&state);
         for (state.players) |*object| if (object.*) |*player| player.run(&state);
 
