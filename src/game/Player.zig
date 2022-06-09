@@ -59,13 +59,13 @@ pub fn drawSprite(self: *Player, comptime sprite: game.Sprite) void {
 pub fn area(self: *Player) [4][2]f32 {
     var box = utils.rectangle(self.x, self.y, self.width, self.height);
     if (self.direction == .left) utils.mirror(&box);
-    if (self.state == .attack) utils.rotate(&box, utils.center(box), self.sword_angle().?);
+    if (self.state == .attack) utils.rotate(&box, utils.center(box), 90 + self.sword_angle().?);
     return box;
 }
 
 fn sword_angle(self: *Player) ?f32 {
     if (self.state != .attack) return null;
-    var angle: f32 = 360 - 360 * (@intToFloat(f32, self.state.attack.time_left) / @intToFloat(f32, attack_time));
+    var angle: f32 = 270 - 360 * (@intToFloat(f32, self.state.attack.time_left) / @intToFloat(f32, attack_time));
     if (self.direction == .left) angle = -angle;
     return angle;
 }
@@ -107,7 +107,7 @@ pub fn run(self: *Player, state: *game.State) void {
 
     // Dash
     if (self.state == .regular or self.state == .attack) {
-        if (Pad.button_down(.x, self.port) and self.dashes > 0) {
+        if (Pad.button_down(.trigger_r, self.port) and self.dashes > 0) {
             self.*.y_speed = 0;
             self.dashes -= 1;
             self.*.state = .{ .dash = .{ .time_left = 10, .delta_x = stick_x, .delta_y = stick_y } };

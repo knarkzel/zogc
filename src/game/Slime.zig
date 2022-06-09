@@ -114,7 +114,7 @@ pub fn run(self: *Slime, state: *game.State) void {
             if (object.*) |*player| {
                 if (player.sword_area()) |sword| {
                     if (utils.diag_collides(self.area(), sword)) |delta| {
-                        if (player.jumps < Player.jumps_max) player.*.jumps += 1;
+                        if (player.dashes < Player.dashes_max) player.*.dashes += 1;
                         const knockback = 8;
                         const diff = self.x - player.x;
                         const sign: f32 = if ((diff > 0) == (delta[0] > 0) or (diff < 0) == (delta[0] < 0)) -1 else 1;
