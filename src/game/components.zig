@@ -10,7 +10,7 @@ pub fn add_physics(self: anytype, state: *game.State) void {
 
     // Collision
     if (@hasField(@TypeOf(self.*), "grounded")) self.*.grounded = false;
-    for (state.blocks) |block| {
+    for (state.blocks.items) |block| {
         const block_area = utils.rectangle(block.x, block.y, block.width, block.height);
 
         // Horizontal

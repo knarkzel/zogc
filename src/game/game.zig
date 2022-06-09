@@ -1,8 +1,10 @@
 const c = @import("../c.zig");
+const std = @import("std");
 const utils = @import("../utils.zig");
 const Video = @import("../ogc/Video.zig");
 const Gpu = @import("../ogc/Gpu.zig");
 const Pad = @import("../ogc/Pad.zig");
+const ArrayList = std.ArrayList;
 
 // Objects
 const Camera = @import("Camera.zig");
@@ -10,6 +12,7 @@ const Player = @import("Player.zig");
 const Slime = @import("Slime.zig");
 const Block = @import("Block.zig");
 const Wall = @import("Wall.zig");
+const WorldGen = @import("WorldGen.zig");
 
 // Global sprites
 pub const Sprite = enum {
@@ -67,8 +70,7 @@ pub const Sprite = enum {
 // Global state
 pub const State = struct {
     players: [4]?Player = .{null} ** 4,
-    blocks: [screen_width / 32]Block = undefined,
-    walls: [300]Wall = undefined,
+    blocks: ArrayList(Block),
     slime: Slime,
     camera: Camera,
 };
@@ -77,7 +79,7 @@ pub const State = struct {
 pub const screen_width: f32 = 640;
 pub const screen_height: f32 = 480;
 
-pub fn run(video: *Video) void {
+pub fn run(video: *Video) !void {
     // Texture
     var texture = Gpu.init();
     texture.load_tpl("textures/atlas.tpl");
@@ -85,21 +87,12 @@ pub fn run(video: *Video) void {
     // State
     var state = State{
         .slime = Slime.init(200, 200),
+        .blocks = ArrayList(Block).init(std.heap.c_allocator),
         .camera = Camera.init(),
     };
-    for (state.blocks) |*block, i| block.* = Block.init((@intToFloat(f32, i) * 32), screen_height - 32);
 
-    var x: f32 = 0;
-    var y: f32 = 0;
-
-    for (state.walls) |*wall| {
-        wall.* = Wall.init(x * 32, y * 32);
-        x += 1;
-        if (x * 32 >= screen_width) {
-            y += 1;
-            x = 0;
-        }
-    }
+    // Generate world
+    try WorldGen.generate(&state.blocks);
 
     while (true) {
         // Handle new players
@@ -117,8 +110,7 @@ pub fn run(video: *Video) void {
         };
 
         // Other
-        for (state.walls) |*wall| wall.drawSprite(.brick);
-        for (state.blocks) |*block| block.drawSprite(.block);
+        for (state.blocks.items) |*block| block.drawSprite(.block);
         state.slime.run(&state);
         for (state.players) |*object| if (object.*) |*player| player.run(&state);
 
