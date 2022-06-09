@@ -22,5 +22,5 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) void {
     Console.init(video.mode, &stdout);
     Pad.init();
     c.ASND_Init();
-    @import("game/game.zig").run(&video) catch unreachable;
+    @import("game/game.zig").run(&video) catch |err| @panic(@errorName(err));
 }
