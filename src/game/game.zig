@@ -72,7 +72,6 @@ pub const State = struct {
     players: [4]?Player = .{null} ** 4,
     blocks: ArrayList(Block),
     slime: Slime,
-    mushroom: Mushroom,
     camera: Camera,
 };
 
@@ -89,12 +88,12 @@ pub fn run(video: *Video) !void {
     var state = State{
         .slime = Slime.init(200, 200),
         .blocks = ArrayList(Block).init(std.heap.c_allocator),
-        .mushroom = Mushroom.init(300, screen_height - 64),
         .camera = Camera.init(),
     };
 
     // Generate world
-    try WorldGen.generate(&state);
+    var world_gen = WorldGen.init();
+    try world_gen.generate(&state);
 
     while (true) {
         // Handle new players
@@ -112,7 +111,6 @@ pub fn run(video: *Video) !void {
 
         // Other
         for (state.blocks.items) |*block| block.drawSprite();
-        state.mushroom.drawSprite(.mushroom);
         state.slime.run(&state);
         for (state.players) |*object| if (object.*) |*player| player.run(&state);
 
