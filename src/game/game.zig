@@ -11,8 +11,8 @@ const Camera = @import("Camera.zig");
 const Player = @import("Player.zig");
 const Slime = @import("Slime.zig");
 const Block = @import("Block.zig");
-const Wall = @import("Wall.zig");
 const WorldGen = @import("WorldGen.zig");
+const Mushroom = @import("Mushroom.zig");
 
 // Global sprites
 pub const Sprite = enum {
@@ -72,6 +72,7 @@ pub const State = struct {
     players: [4]?Player = .{null} ** 4,
     blocks: ArrayList(Block),
     slime: Slime,
+    mushroom: Mushroom,
     camera: Camera,
 };
 
@@ -88,11 +89,12 @@ pub fn run(video: *Video) !void {
     var state = State{
         .slime = Slime.init(200, 200),
         .blocks = ArrayList(Block).init(std.heap.c_allocator),
+        .mushroom = Mushroom.init(300, screen_height - 64),
         .camera = Camera.init(),
     };
 
     // Generate world
-    try WorldGen.generate(&state.blocks);
+    try WorldGen.generate(&state);
 
     while (true) {
         // Handle new players
@@ -106,11 +108,11 @@ pub fn run(video: *Video) !void {
         for (state.players) |object| if (object) |player| {
             state.camera.follow(player.x, player.y);
             video.camera(state.camera.x, state.camera.y);
-            break;
         };
 
         // Other
         for (state.blocks.items) |*block| block.drawSprite(.block);
+        state.mushroom.drawSprite(.mushroom);
         state.slime.run(&state);
         for (state.players) |*object| if (object.*) |*player| player.run(&state);
 

@@ -5,11 +5,11 @@ const game = @import("game.zig");
 const components = @import("components.zig");
 const utils = @import("../utils.zig");
 
-const deadzone = 0.1;
-const speed: f32 = 10;
-const jumps_max: u8 = 2;
-const dashes_max: u8 = 1;
-const attack_time: u8 = 15;
+pub const deadzone = 0.1;
+pub const speed: f32 = 10;
+pub const jumps_max: u8 = 2;
+pub const dashes_max: u8 = 1;
+pub const attack_time: u8 = 15;
 
 x: f32,
 y: f32,
@@ -101,14 +101,28 @@ pub fn run(self: *Player, state: *game.State) void {
     // Exit
     if (Pad.button_down(.start, self.port)) std.os.exit(0);
 
+    // Stick
+    const stick_x = Pad.stick_x(self.port);
+    const stick_y = Pad.stick_y(self.port);
+
+    // Dash
+    if (self.state == .regular or self.state == .attack) {
+        if (Pad.button_down(.x, self.port) and self.dashes > 0) {
+            self.*.y_speed = 0;
+            self.dashes -= 1;
+            self.*.state = .{ .dash = .{ .time_left = 10, .delta_x = stick_x, .delta_y = stick_y } };
+        }
+    }
+
+    if (self.state == .regular or self.state == .dash) {
+        // Attack
+        if (Pad.button_down(.a, self.port)) self.*.state = .{ .attack = .{ .time_left = attack_time } };
+    }
+
     // States
     switch (self.*.state) {
         .regular => {
-            self.drawHealth();
-
             // Movement
-            const stick_x = Pad.stick_x(self.port);
-            const stick_y = Pad.stick_y(self.port);
             if (stick_x > deadzone or stick_x < -deadzone) {
                 self.*.x_speed = stick_x * speed;
                 self.*.direction = if (stick_x > 0) .right else .left;
@@ -126,22 +140,14 @@ pub fn run(self: *Player, state: *game.State) void {
                 game.Sprite.glider.draw(utils.rectangle(self.x, self.y - 64, 64, 64));
             }
 
-            // Dash
-            if (Pad.button_down(.x, self.port) and self.dashes > 0) {
-                self.*.y_speed = 0;
-                self.dashes -= 1;
-                self.*.state = .{ .dash = .{ .time_left = 10, .delta_x = stick_x, .delta_y = stick_y } };
-            }
-
-            // Attack
-            if (Pad.button_down(.a, self.port)) self.*.state = .{ .attack = .{ .time_left = attack_time } };
-
             // Sprites
             if (self.*.y_speed < 0) {
                 self.drawSprite(.player_fall);
             } else if (self.*.y_speed > 0) {
                 self.drawSprite(.player_jump);
             } else self.drawSprite(.player_idle);
+
+            self.drawHealth();
         },
         .dash => |*dash| {
             // Movement

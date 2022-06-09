@@ -32,4 +32,8 @@ pub fn add_physics(self: anytype, state: *game.State) void {
     // Apply speed
     self.*.x += self.*.x_speed;
     self.*.y -= self.*.y_speed;
+
+    // Bounds
+    if (self.x < -game.screen_width) self.x = -game.screen_width;
+    if (self.x > 2 * game.screen_width - self.width) self.x = 2 * game.screen_width - self.width;
 }

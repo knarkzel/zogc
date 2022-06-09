@@ -3,8 +3,8 @@ const ArrayList = std.ArrayList;
 const Block = @import("Block.zig");
 const game = @import("game.zig");
 
-pub fn generate(blocks: *ArrayList(Block)) !void {
-    try base_platforms(blocks);
+pub fn generate(state: *game.State) !void {
+    try base_platforms(&state.blocks);
 }
 
 fn base_platforms(blocks: *ArrayList(Block)) !void {
