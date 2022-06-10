@@ -4,3 +4,4 @@ zig-cache
 .DS_Store
 *.h
 *.tps
+*.tpl
