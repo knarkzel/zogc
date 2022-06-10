@@ -1,3 +1,0 @@
-[submodule "vendor/devkitpro"]
-	path = vendor/devkitpro
-	url = https://github.com/knarkzel/devkitpro

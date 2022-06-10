@@ -3,11 +3,14 @@ const builtin = @import("builtin");
 const Builder = std.build.Builder;
 const allocPrint = std.fmt.allocPrint;
 
+// user options
 const name = "zogc";
 const wii_ip = "192.168.11.171";
 const textures = "src/game/textures";
-const packages = "vendor";
-const devkitpro = packages ++ "/devkitpro";
+
+// build options
+const devkitpro = "devkitpro";
+const flags = .{ "-lmad", "-lasnd", "-logc", "-lm" };
 const dolphin = switch (builtin.target.os.tag) {
     .macos => "Dolphin",
     .windows => "Dolphin.exe",
@@ -33,36 +36,35 @@ pub fn build(b: *Builder) !void {
         .cpu_features_add = std.Target.powerpc.featureSet(&.{.hard_float}),
     });
 
-    // ensure dependencies are installed
-    {
-        const dir = try std.fs.cwd().openDir(packages, .{ .iterate = true });
-        var iter = dir.iterate();
-        while (try iter.next()) |entry| {
-            const module = try allocPrint(b.allocator, "{s}/{s}", .{ packages, entry.name });
-            try package(b.allocator, module);
+    // ensure devkitpro is installed
+    if (std.fs.cwd().access(devkitpro, .{})) |_| {} else |err| {
+        if (err == error.FileNotFound) {
+            const repository = switch (builtin.target.os.tag) {
+                .macos => "https://github.com/knarkzel/devkitpro-mac",
+                else => "https://github.com/knarkzel/devkitpro-linux",
+            };
+            try command(b.allocator, &.{ "git", "clone", repository, "devkitpro" });
         }
     }
 
     // ensure images in textures are converted to tpl
-    {
-        const dir = try std.fs.cwd().openDir(textures, .{ .iterate = true });
-        var iter = dir.iterate();
-        while (try iter.next()) |entry| {
-            if (std.mem.endsWith(u8, entry.name, ".png")) {
-                const base = entry.name[0 .. entry.name.len - 4];
-                const input = try allocPrint(b.allocator, "{s}/{s}", .{ textures, entry.name });
-                const output = try allocPrint(b.allocator, "{s}/{s}.tpl", .{ textures, base });
-                try convert(b.allocator, input, output);
+    const dir = try std.fs.cwd().openDir(textures, .{ .iterate = true });
+    var iter = dir.iterate();
+    while (try iter.next()) |entry| {
+        if (std.mem.endsWith(u8, entry.name, ".png")) {
+            const base = entry.name[0 .. entry.name.len - 4];
+            const input = try allocPrint(b.allocator, "{s}/{s}", .{ textures, entry.name });
+            const output = try allocPrint(b.allocator, "{s}/{s}.tpl", .{ textures, base });
+            try convert(b.allocator, input, output);
 
-                // Delete useless extra header file
-                const header = try allocPrint(b.allocator, "{s}/{s}.h", .{ textures, base });
-                try std.fs.cwd().deleteFile(header);
-            }
+            // Delete useless extra header file
+            const header = try allocPrint(b.allocator, "{s}/{s}.h", .{ textures, base });
+            try std.fs.cwd().deleteFile(header);
         }
     }
 
     // build both elf and dol
-    const elf = b.addSystemCommand(&.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii", "-lmad", "-lasnd", "-logc", "-lm", "-o", "build/" ++ name ++ ".elf" });
+    const elf = b.addSystemCommand(&(.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii" } ++ flags ++ .{ "-o", "build/" ++ name ++ ".elf" }));
     const dol = b.addSystemCommand(&.{ devkitpro ++ "/tools/bin/elf2dol", "build/" ++ name ++ ".elf", "build/" ++ name ++ ".dol" });
     b.default_step.dependOn(&dol.step);
     dol.step.dependOn(&elf.step);
@@ -92,17 +94,16 @@ pub fn build(b: *Builder) !void {
     }
 }
 
+fn cwd() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse ".";
+}
+
 fn command(allocator: std.mem.Allocator, argv: []const []const u8) !void {
     var child = std.ChildProcess.init(argv, allocator);
-    child.cwd = std.fs.path.dirname(@src().file) orelse ".";
+    child.cwd = cwd();
     child.stderr = std.io.getStdErr();
     child.stdout = std.io.getStdOut();
     _ = try child.spawnAndWait();
-}
-
-// Ensures package is installed with git submodule
-fn package(allocator: std.mem.Allocator, path: []const u8) !void {
-    try command(allocator, &.{ "git", "submodule", "update", "--init", "--recursive", path });
 }
 
 // Converts image into tpl format
