@@ -3,8 +3,8 @@
 Game engine for the Wii in Zig with zero-fuss installation.
 
 ```bash
-git clone https://github.com/knarkzel/zick
-cd zick/
+git clone https://github.com/knarkzel/zogc
+cd zogc/
 zig build
 ```
 
