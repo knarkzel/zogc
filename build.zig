@@ -9,7 +9,6 @@ const wii_ip = "192.168.11.171";
 const textures = "src/game/textures";
 
 // build options
-const devkitpro = "devkitpro";
 const flags = .{ "-lmad", "-lasnd", "-logc", "-lm" };
 const dolphin = switch (builtin.target.os.tag) {
     .macos => "Dolphin",
@@ -21,10 +20,10 @@ pub fn build(b: *Builder) !void {
     // set build options
     const mode = b.standardReleaseOptions();
     const obj = b.addObject("main", "src/main.zig");
-    obj.setOutputDir("build");
+    obj.setOutputDir(cwd() ++ "/build");
     obj.linkLibC();
-    obj.setLibCFile(std.build.FileSource{ .path = "libc.txt" });
-    obj.addIncludeDir(devkitpro ++ "/libogc/include");
+    obj.setLibCFile(std.build.FileSource{ .path = cwd() ++ "/libc.txt" });
+    obj.addIncludeDir(cwd() ++ "/devkitpro/libogc/include");
 
     // target
     obj.setBuildMode(mode);
@@ -37,18 +36,16 @@ pub fn build(b: *Builder) !void {
     });
 
     // ensure devkitpro is installed
-    if (std.fs.cwd().access(devkitpro, .{})) |_| {} else |err| {
-        if (err == error.FileNotFound) {
-            const repository = switch (builtin.target.os.tag) {
-                .macos => "https://github.com/knarkzel/devkitpro-mac",
-                else => "https://github.com/knarkzel/devkitpro-linux",
-            };
-            try command(b.allocator, &.{ "git", "clone", repository, "devkitpro" });
-        }
-    }
+    root().access("devkitpro", .{}) catch |err| if (err == error.FileNotFound) {
+        const repository = switch (builtin.target.os.tag) {
+            .macos => "https://github.com/knarkzel/devkitpro-mac",
+            else => "https://github.com/knarkzel/devkitpro-linux",
+        };
+        try command(b.allocator, &.{ "git", "clone", repository, cwd() ++ "/devkitpro" });
+    };
 
     // ensure images in textures are converted to tpl
-    const dir = try std.fs.cwd().openDir(textures, .{ .iterate = true });
+    const dir = try root().openDir(textures, .{ .iterate = true });
     var iter = dir.iterate();
     while (try iter.next()) |entry| {
         if (std.mem.endsWith(u8, entry.name, ".png")) {
@@ -59,13 +56,13 @@ pub fn build(b: *Builder) !void {
 
             // Delete useless extra header file
             const header = try allocPrint(b.allocator, "{s}/{s}.h", .{ textures, base });
-            try std.fs.cwd().deleteFile(header);
+            try root().deleteFile(header);
         }
     }
 
     // build both elf and dol
-    const elf = b.addSystemCommand(&(.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii" } ++ flags ++ .{ "-o", "build/" ++ name ++ ".elf" }));
-    const dol = b.addSystemCommand(&.{ devkitpro ++ "/tools/bin/elf2dol", "build/" ++ name ++ ".elf", "build/" ++ name ++ ".dol" });
+    const elf = b.addSystemCommand(&(.{ "devkitpro/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ "devkitpro/libogc/lib/wii" } ++ flags ++ .{ "-o", "build/" ++ name ++ ".elf" }));
+    const dol = b.addSystemCommand(&.{ "devkitpro/tools/bin/elf2dol", "build/" ++ name ++ ".elf", "build/" ++ name ++ ".dol" });
     b.default_step.dependOn(&dol.step);
     dol.step.dependOn(&elf.step);
     elf.step.dependOn(&obj.step);
@@ -78,7 +75,7 @@ pub fn build(b: *Builder) !void {
 
     // deploy dol to wii over network
     const deploy_step = b.step("deploy", "Deploy to Wii");
-    const wiiload = b.addSystemCommand(&.{ devkitpro ++ "/tools/bin/wiiload", "build/" ++ name ++ ".dol" });
+    const wiiload = b.addSystemCommand(&.{ "devkitpro/tools/bin/wiiload", "build/" ++ name ++ ".dol" });
     wiiload.setEnvironmentVariable("WIILOAD", "tcp:" ++ wii_ip);
     deploy_step.dependOn(&dol.step);
     deploy_step.dependOn(&wiiload.step);
@@ -88,14 +85,18 @@ pub fn build(b: *Builder) !void {
     line_step.dependOn(&dol.step);
     if (b.args) |args| {
         for (args) |arg| {
-            const addr2line = b.addSystemCommand(&.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-addr2line", "-e", "build/" ++ name ++ ".elf", arg });
+            const addr2line = b.addSystemCommand(&.{ "devkitpro/devkitPPC/bin/powerpc-eabi-addr2line", "-e", "build/" ++ name ++ ".elf", arg });
             line_step.dependOn(&addr2line.step);
         }
     }
 }
 
+fn root() std.fs.Dir {
+    return std.fs.openDirAbsolute(cwd(), .{}) catch unreachable;
+}
+
 fn cwd() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    return std.fs.path.dirname(@src().file) orelse unreachable;
 }
 
 fn command(allocator: std.mem.Allocator, argv: []const []const u8) !void {
@@ -108,5 +109,5 @@ fn command(allocator: std.mem.Allocator, argv: []const []const u8) !void {
 
 // Converts image into tpl format
 fn convert(allocator: std.mem.Allocator, input: []const u8, output: []const u8) !void {
-    try command(allocator, &.{ devkitpro ++ "/tools/bin/gxtexconv", "-i", input, "-o", output });
+    try command(allocator, &.{ "devkitpro/tools/bin/gxtexconv", "-i", input, "-o", output });
 }
