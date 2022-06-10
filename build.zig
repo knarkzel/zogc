@@ -12,6 +12,16 @@ const dolphin = switch (builtin.target.os.tag) {
 };
 
 pub fn build(b: *Builder) !void {
+    // ensure depencies in vendor are installed
+    const vendor = "vendor";
+    const dir = try std.fs.cwd().openDir(vendor, .{ .iterate = true });
+    var iter = dir.iterate();
+    while (try iter.next()) |entry| {
+        const module = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ vendor, entry.name });
+        try package(b.allocator, module);
+    }
+
+    // set build options
     const mode = b.standardReleaseOptions();
     const obj = b.addObject("main", "src/main.zig");
     obj.setOutputDir("build");
@@ -29,32 +39,27 @@ pub fn build(b: *Builder) !void {
         .cpu_features_add = std.Target.powerpc.featureSet(&.{.hard_float}),
     });
 
-    // ensure depencies in vendor are installed
-    const vendor = "vendor";
-    const dir = try std.fs.cwd().openDir(vendor, .{ .iterate = true });
-    var iter = dir.iterate();
-    while (try iter.next()) |entry| {
-        const module = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ vendor, entry.name });
-        try package(b.allocator, module);
-    }
-
+    // build both elf and dol
     const elf = b.addSystemCommand(&.{ devkitpro ++ "/devkitPPC/bin/powerpc-eabi-gcc", "build/main.o", "-g", "-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float", "-Wl,-Map,build/.map", "-L" ++ devkitpro ++ "/libogc/lib/wii", "-lmad", "-lasnd", "-logc", "-lm", "-o", "build/" ++ name ++ ".elf" });
     const dol = b.addSystemCommand(&.{ devkitpro ++ "/tools/bin/elf2dol", "build/" ++ name ++ ".elf", "build/" ++ name ++ ".dol" });
     b.default_step.dependOn(&dol.step);
     dol.step.dependOn(&elf.step);
     elf.step.dependOn(&obj.step);
 
+    // run dol in dolphin
     const run_step = b.step("run", "Run in Dolphin");
     const emulator = b.addSystemCommand(&.{ dolphin, "-a", "LLE", "-e", "build/" ++ name ++ ".dol" });
     run_step.dependOn(&dol.step);
     run_step.dependOn(&emulator.step);
 
+    // deploy dol to wii over network
     const deploy_step = b.step("deploy", "Deploy to Wii");
     const wiiload = b.addSystemCommand(&.{ devkitpro ++ "/tools/bin/wiiload", "build/" ++ name ++ ".dol" });
     wiiload.setEnvironmentVariable("WIILOAD", "tcp:" ++ wii_ip);
     deploy_step.dependOn(&dol.step);
     deploy_step.dependOn(&wiiload.step);
 
+    // debug stack dump addresses using powerpc-eabi-addr2line
     const line_step = b.step("line", "Get line from crash address");
     line_step.dependOn(&dol.step);
     if (b.args) |args| {
